@@ -1,5 +1,7 @@
 import discord
 
+intents = discord.Intents.default()
+
 class MyClient(discord.Client):
     async def on_ready(self):
         print('Logged in as', self.user)
@@ -12,5 +14,5 @@ class MyClient(discord.Client):
         if message.content == 'ping':
             await message.channel.send('pong')
 
-client = MyClient()
+client = MyClient(intents=intents)
 client.run('MTEzMzE2MTU4MjQ1MzYwMDM3Nw.GtaoW-.5b5CtC0eXkKxSP2NPMgvy85EC7VeZUYUsmaxjk')
