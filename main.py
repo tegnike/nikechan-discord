@@ -25,4 +25,4 @@ class MyClient(discord.Client):
             print('Message not recognized.')
 
 client = MyClient(intents=intents)
-client.run('MTEzMzE2MTU4MjQ1MzYwMDM3Nw.GtaoW-.5b5CtC0eXkKxSP2NPMgvy85EC7VeZUYUsmaxjk')
+client.run('MTEzMzE2MTU4MjQ1MzYwMDM3Nw.GiWxQf.g4cnVupSdVI5YmZBmqlDkkpMmKmJqjXjYVuIzA')
