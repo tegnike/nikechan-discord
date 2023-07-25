@@ -9,8 +9,9 @@ class MyClient(discord.Client):
         print('Logged in as', self.user)
 
     async def on_message(self, message):
+        print('Message object:', message)  # メッセージオブジェクト全体を出力
         print('Message received from', message.author, ':', message.content)
-        
+
         # don't respond to ourselves
         if message.author == self.user:
             print('Message received from self, ignoring.')
@@ -20,7 +21,6 @@ class MyClient(discord.Client):
             print('Ping received, sending pong.')
             await message.channel.send('pong')
         else:
-            print(message.content)
             print('Message not recognized.')
 
 client = MyClient(intents=intents)
