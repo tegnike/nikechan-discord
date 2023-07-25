@@ -1,7 +1,6 @@
 import discord
 
-intents = discord.Intents.default()
-intents.members = True
+intents = discord.Intents.all()
 
 class MyClient(discord.Client):
     async def on_ready(self):
