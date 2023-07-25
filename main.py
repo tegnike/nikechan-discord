@@ -1,8 +1,6 @@
 import discord
 
 intents = discord.Intents.default()
-intents.messages = True
-intents.guilds = True
 intents.members = True
 
 class MyClient(discord.Client):
@@ -22,6 +20,7 @@ class MyClient(discord.Client):
             print('Ping received, sending pong.')
             await message.channel.send('pong')
         else:
+            print(message.content)
             print('Message not recognized.')
 
 client = MyClient(intents=intents)
