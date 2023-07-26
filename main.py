@@ -20,7 +20,7 @@ class MyClient(discord.Client):
         print('Logged in as', self.user)
 
     async def on_message(self, message):
-        print('Message received from', message.author, ':', message.content)
+        print('Message received from', message.author.nick, ':', message.content)
 
         # don't respond to ourselves
         if message.author == self.user:
@@ -31,7 +31,7 @@ class MyClient(discord.Client):
             return
 
         # ユーザーメッセージを会話履歴に追加
-        self.history.add_user_message(str(message.author) + ": " + str(message))
+        self.history.add_user_message(str(message.author.nick) + ": " + str(message.content))
         print("User:", message.content)
 
         if judge_if_i_response(self.history):
