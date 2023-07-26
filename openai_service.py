@@ -6,7 +6,7 @@ from langchain.schema import (
 )
 
 def get_system_message():
-    with open('app/services/system_message.txt', 'r') as file:
+    with open('system_message.txt', 'r') as file:
         return file.read().strip()
 
 def get_openai_response(message, history, model_name):
