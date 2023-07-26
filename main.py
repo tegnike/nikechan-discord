@@ -31,7 +31,7 @@ class MyClient(discord.Client):
             return
 
         # ユーザーメッセージを会話履歴に追加
-        self.history.add_user_message(str(message.author.nick) + ": " + str(message.content))
+        self.history.add_user_message(message.author.nick + ": " + message.content)
         print("User:", message.content)
 
         if judge_if_i_response(self.history):
@@ -42,7 +42,7 @@ class MyClient(discord.Client):
                 self.current_date = new_date
 
             model_name = "gpt-4" if self.count <= 20 else "gpt-3.5-turbo"
-            response = get_openai_response(message.content, self.history, model_name)
+            response = get_openai_response(self.history, model_name)
             await message.channel.send(response)
 
             self.count += 1
