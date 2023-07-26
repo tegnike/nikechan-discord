@@ -26,7 +26,7 @@ class MyClient(discord.Client):
         if message.author == self.user:
             print('Message received from self, ignoring.')
             return
-        if self.count > 100
+        if self.count > 100:
             print('Message limit.')
             return
 
