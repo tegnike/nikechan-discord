@@ -28,7 +28,7 @@ class MyClient(discord.Client):
             return
 
         # ユーザーメッセージを会話履歴に追加
-        self.history.add_user_message(message.author + ": " + message.content)
+        self.history.add_user_message(str(message.author) + ": " + str(message))
         print("User:", message.content)
 
         if judge_if_i_response(self.history):
