@@ -1,4 +1,4 @@
-# import discord
+import discord
 import os
 from datetime import datetime, timedelta
 from pytz import timezone
