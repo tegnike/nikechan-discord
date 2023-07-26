@@ -3,7 +3,7 @@ import os
 from datetime import datetime, timedelta
 from pytz import timezone
 from langchain.memory import ChatMessageHistory
-from openai_service import get_openai_response
+from openai_service import get_openai_response, judge_if_i_response
 
 intents = discord.Intents.all()
 discord_key = os.environ['DISCORD_KEY']
@@ -27,9 +27,11 @@ class MyClient(discord.Client):
             print('Message received from self, ignoring.')
             return
 
-        if 'AIニケちゃん' in message.content:
-            print('Message contains "AIニケちゃん".')
+        # ユーザーメッセージを会話履歴に追加
+        self.history.add_user_message(message.author + ": " + message)
+        print("User:", message)
 
+        if judge_if_i_response(self.history):
             # Check if date has changed
             new_date = datetime.now(timezone('Europe/Warsaw')).date()
             if new_date > self.current_date:
