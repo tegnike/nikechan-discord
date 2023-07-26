@@ -28,8 +28,8 @@ class MyClient(discord.Client):
             return
 
         # ユーザーメッセージを会話履歴に追加
-        self.history.add_user_message(message.author + ": " + message)
-        print("User:", message)
+        self.history.add_user_message(message.author + ": " + message.content)
+        print("User:", message.content)
 
         if judge_if_i_response(self.history):
             # Check if date has changed
