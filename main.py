@@ -1,9 +1,9 @@
-import discord
+# import discord
 import os
 from datetime import datetime, timedelta
 from pytz import timezone
 from langchain.memory import ChatMessageHistory
-from .services import openai_service
+import openai_service
 
 intents = discord.Intents.all()
 discord_key = os.environ['DISCORD_KEY']
