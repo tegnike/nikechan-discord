@@ -26,6 +26,9 @@ class MyClient(discord.Client):
         if message.author == self.user:
             print('Message received from self, ignoring.')
             return
+        if self.count > 100
+            print('Message limit.')
+            return
 
         # ユーザーメッセージを会話履歴に追加
         self.history.add_user_message(str(message.author) + ": " + str(message))
