@@ -45,6 +45,7 @@ def judge_if_i_response(history):
             past_messages += "ニケ: " + latest_message.content + "\n"
 
     # OpenAIによる応答生成
+    print("past_messages:", past_messages)
     messages = [SystemMessage(content=get_system_message2())] + [HumanMessage(content=past_messages)]
     chat = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=1.0, max_tokens=2)
     response = chat(messages)
