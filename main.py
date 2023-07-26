@@ -3,7 +3,7 @@ import os
 from datetime import datetime, timedelta
 from pytz import timezone
 from langchain.memory import ChatMessageHistory
-import openai_service
+from openai_service import get_openai_response
 
 intents = discord.Intents.all()
 discord_key = os.environ['DISCORD_KEY']
