@@ -37,7 +37,7 @@ def get_openai_response(history, model_name):
 def judge_if_i_response(history):
     # 過去5件のメッセージを取得
     latest_messages = history.messages[-5:]
-    past_messages = ""
+    past_messages = "You're name is 'ニケ'\n"
     for latest_message in latest_messages:
         if isinstance(latest_message, HumanMessage):
             past_messages += latest_message.content + "\n"
