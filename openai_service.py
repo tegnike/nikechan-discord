@@ -51,7 +51,4 @@ def judge_if_i_response(history):
     response = chat(messages)
 
     result = response.content.lower()
-    # AIメッセージを会話履歴に追加
-    print("AI should response?:", result)
-
     return result == "true"

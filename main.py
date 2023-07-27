@@ -37,11 +37,19 @@ class MyClient(discord.Client):
         # サーバーIDから状態を取得
         state = self.states[server_id]
 
+        # 日付が変わったらカウントをリセット
+        new_date = datetime.now(timezone('Europe/Warsaw')).date()
+        if new_date > state["current_date"]:
+            state["count"] = 0
+            state["current_date"] = new_date
+
         # 自分のメッセージは無視 または 100件以上のメッセージは無視
         if message.author == self.user:
             print('Message received from self, ignoring.')
             return
         if state["count"] > 100:
+            if state["count"] == 100:
+                await message.channel.send("[固定応答]設定上限に達したため、本日の応答は終了します。")
             print('Message limit.')
             return
 
@@ -68,19 +76,19 @@ class MyClient(discord.Client):
             # 会話歴から次に自分が回答すべきかを判定
             need_response = judge_if_i_response(state["history"])
 
+        print("AI should response?:", need_response)
+
         # 応答が必要な場合
         if need_response:
-            # 日付が変わったらカウントをリセット
-            new_date = datetime.now(timezone('Europe/Warsaw')).date()
-            if new_date > state["current_date"]:
-                state["count"] = 0
-                state["current_date"] = new_date
-
             # OpenAIによる応答生成
             model_name = "gpt-4" if state["count"] <= 20 else "gpt-3.5-turbo"
             response = get_openai_response(state["history"], model_name)
             # メッセージを送信
             await message.channel.send(response)
+
+            if state["count"] == 20:
+                # 20件目のメッセージを送信したら、モデルをGPT-3.5に切り替える
+                await message.channel.send("[固定応答]設定上限に達したため、モデルをGPT-4からGPT-3.5に切り替えます。")
 
             state["count"] += 1
             print('Message send completed.')
