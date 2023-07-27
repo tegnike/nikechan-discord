@@ -8,6 +8,7 @@ from openai_service import get_openai_response, judge_if_i_response
 intents = discord.Intents.all()
 discord_key = os.environ['DISCORD_KEY']
 allowed_channels = [1090678631489077331, 1134007804244529212, 1133743935727091773]
+master_id = 576031815945420812
 
 class MyClient(discord.Client):
     def __init__(self, *args, **kwargs):
@@ -36,7 +37,14 @@ class MyClient(discord.Client):
         # Get this server's state
         state = self.states[server_id]
 
-        auther_name = message.author.nick if message.author.nick else message.author.name
+        auther_name = ''
+        if master_id == message.author.id:
+            auther_name = ’マスター'
+        elif message.author.nick:
+            auther_name = message.author.nick
+        else:
+            auther_name = message.author.name
+
         print('Message received from', auther_name, ':', message.content)
 
         # don't respond to ourselves
