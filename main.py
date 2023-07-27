@@ -39,7 +39,7 @@ class MyClient(discord.Client):
 
         auther_name = ''
         if master_id == message.author.id:
-            auther_name = ’マスター'
+            auther_name = 'マスター'
         elif message.author.nick:
             auther_name = message.author.nick
         else:
