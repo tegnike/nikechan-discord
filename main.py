@@ -36,7 +36,8 @@ class MyClient(discord.Client):
         # Get this server's state
         state = self.states[server_id]
 
-        print('Message received from', message.author.nick, ':', message.content)
+        auther_name = message.author.nick if message.author.nick else message.author.name
+        print('Message received from', auther_name, ':', message.content)
 
         # don't respond to ourselves
         if message.author == self.user:
@@ -47,7 +48,7 @@ class MyClient(discord.Client):
             return
 
         # ユーザーメッセージを会話履歴に追加
-        state["history"].add_user_message(message.author.nick + ": " + message.content)
+        state["history"].add_user_message(auther_name + ": " + message.content)
         print("User:", message.content)
 
         if judge_if_i_response(state["history"]):
