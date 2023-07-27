@@ -59,7 +59,7 @@ class MyClient(discord.Client):
         state["history"].add_user_message(auther_name + ": " + message.content)
         print("User:", message.content)
 
-        need_response = false
+        need_response = False
         if message.reference is not None:
             # bot宛のリプライであるかを確認
             referenced_message = await message.channel.fetch_message(message.reference.message_id)
