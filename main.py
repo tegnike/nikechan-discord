@@ -23,10 +23,10 @@ class MyClient(discord.Client):
         if message.channel.id not in allowed_channels:
             return
 
-        # Get the server's ID
+        # サーバーID取得
         server_id = message.guild.id
 
-        # If this server's state is not initialized yet, initialize it
+        # サーバーIDがなければ初期化
         if server_id not in self.states:
             self.states[server_id] = {
                 "history": ChatMessageHistory(),
@@ -34,20 +34,10 @@ class MyClient(discord.Client):
                 "current_date": datetime.now(timezone('Europe/Warsaw')).date(),
             }
 
-        # Get this server's state
+        # サーバーIDから状態を取得
         state = self.states[server_id]
 
-        auther_name = ''
-        if master_id == message.author.id:
-            auther_name = 'マスター'
-        elif message.author.nick:
-            auther_name = message.author.nick
-        else:
-            auther_name = message.author.name
-
-        print('Message received from', auther_name, ':', message.content)
-
-        # don't respond to ourselves
+        # 自分のメッセージは無視 または 100件以上のメッセージは無視
         if message.author == self.user:
             print('Message received from self, ignoring.')
             return
@@ -55,25 +45,47 @@ class MyClient(discord.Client):
             print('Message limit.')
             return
 
+        # auther_nameを取得
+        auther_name = ''
+        if master_id == message.author.id:
+            auther_name = 'マスター'
+        elif message.author.nick:
+            auther_name = message.author.nick
+        else:
+            auther_name = message.author.name
+        print('Message received from', auther_name, ':', message.content)
+
         # ユーザーメッセージを会話履歴に追加
         state["history"].add_user_message(auther_name + ": " + message.content)
         print("User:", message.content)
 
-        if judge_if_i_response(state["history"]):
-            # Check if date has changed
+        need_response = false
+        if message.reference is not None:
+            # bot宛のリプライであるかを確認
+            referenced_message = await message.channel.fetch_message(message.reference.message_id)
+            need_response = referenced_message.author == self.user
+        else:
+            # 会話歴から次に自分が回答すべきかを判定
+            need_response = judge_if_i_response(state["history"])
+
+        # 応答が必要な場合
+        if need_response:
+            # 日付が変わったらカウントをリセット
             new_date = datetime.now(timezone('Europe/Warsaw')).date()
             if new_date > state["current_date"]:
                 state["count"] = 0
                 state["current_date"] = new_date
 
+            # OpenAIによる応答生成
             model_name = "gpt-4" if state["count"] <= 20 else "gpt-3.5-turbo"
             response = get_openai_response(state["history"], model_name)
+            # メッセージを送信
             await message.channel.send(response)
 
             state["count"] += 1
             print('Message send completed.')
         else:
-            print('Message not recognized.')
+            print('Message was not sent.')
 
 client = MyClient(intents=intents)
 client.run(discord_key)
