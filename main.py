@@ -7,6 +7,7 @@ from openai_service import get_openai_response, judge_if_i_response
 
 intents = discord.Intents.all()
 discord_key = os.environ['DISCORD_KEY']
+allowed_channels = [1090678631489077331, 1134007804244529212]
 
 class MyClient(discord.Client):
     def __init__(self, *args, **kwargs):
@@ -18,6 +19,9 @@ class MyClient(discord.Client):
         print('Logged in as', self.user)
 
     async def on_message(self, message):
+        if message.channel.id not in allowed_channels:
+            return
+
         # Get the server's ID
         server_id = message.guild.id
 
