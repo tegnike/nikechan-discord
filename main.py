@@ -73,6 +73,7 @@ class MyClient(discord.Client):
             referenced_message = await message.channel.fetch_message(message.reference.message_id)
             need_response = referenced_message.author == self.user
             # リプライに反応させるようにリプライメッセージを履歴に追加
+            print("Referenced message:", referenced_message.content)
             state["history"].add_ai_message(referenced_message.content)
         else:
             # 会話歴から次に自分が回答すべきかを判定

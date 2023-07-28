@@ -15,16 +15,9 @@ def get_system_message2():
 
 def get_openai_response(history, model_name):
     # 過去15件のメッセージを取得
-    latest_messages = history.messages[-14:]
-    past_messages = []
-    for latest_message in latest_messages:
-        if isinstance(latest_message, HumanMessage):
-            past_messages.append(HumanMessage(content=latest_message.content))
-        else:
-            past_messages.append(AIMessage(content=latest_message.content))
+    latest_messages = history.messages[-15:]
 
     # OpenAIによる応答生成
-    print("past_messages:", past_messages)
     print("latest_messages:", latest_messages)
     messages = [SystemMessage(content=get_system_message())] + latest_messages
     chat = ChatOpenAI(model_name=model_name, temperature=0, max_tokens=350)
