@@ -25,7 +25,7 @@ def get_openai_response(history, model_name):
 
     # OpenAIによる応答生成
     messages = [SystemMessage(content=get_system_message())] + latest_messages
-    chat = ChatOpenAI(model_name=model_name, temperature=0, max_tokens=200)
+    chat = ChatOpenAI(model_name=model_name, temperature=0, max_tokens=350)
     response = chat(messages)
 
     # 会話履歴を更新

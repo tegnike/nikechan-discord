@@ -63,18 +63,24 @@ class MyClient(discord.Client):
             auther_name = message.author.name
         print('Message received from', auther_name, ':', message.content)
 
-        # ユーザーメッセージを会話履歴に追加
-        state["history"].add_user_message(auther_name + ": " + message.content)
-        print("User:", message.content)
 
         need_response = False
-        if message.reference is not None:
+        if self.user in message.mentions:
+            # bot宛のメンションであるかを確認
+            need_response = True
+        elif message.reference is not None:
             # bot宛のリプライであるかを確認
             referenced_message = await message.channel.fetch_message(message.reference.message_id)
             need_response = referenced_message.author == self.user
+            # リプライに反応させるようにリプライメッセージを履歴に追加
+            state["history"].add_ai_message(referenced_message.content)
         else:
             # 会話歴から次に自分が回答すべきかを判定
             need_response = judge_if_i_response(state["history"])
+
+        # ユーザーメッセージを会話履歴に追加
+        state["history"].add_user_message(auther_name + ": " + message.content)
+        print("User:", message.content)
 
         print("AI should response?:", need_response)
 
