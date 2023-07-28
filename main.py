@@ -22,9 +22,9 @@ class MyClient(discord.Client):
 
     async def on_message(self, message):
         if message.channel.id in allowed_channels:
-            self.response_message(self, message)
+            self.response_message(message)
         elif message.channel.id == join_channel_id:
-            self.response_join_message(self, message)
+            self.response_join_message(message)
 
     async def response_message(self, message):
         # サーバーID取得
