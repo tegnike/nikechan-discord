@@ -13,6 +13,10 @@ def get_system_message2():
     with open('system_message2.txt', 'r') as file:
         return file.read().strip()
 
+def get_system_message3():
+    with open('system_message3.txt', 'r') as file:
+        return file.read().strip()
+
 def get_openai_response(history, model_name):
     # 過去15件のメッセージを取得
     latest_messages = history.messages[-15:]
@@ -46,3 +50,13 @@ def judge_if_i_response(history):
 
     result = response.content.lower()
     return result == "true"
+
+def get_join_response(user_name):
+    # OpenAIによる応答生成
+    messages = [SystemMessage(content=get_system_message3())] + [HumanMessage(content=user_name)]
+    chat = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0, max_tokens=150)
+    response = chat(messages)
+
+    print("AI join message:", response.content)
+
+    return response.content

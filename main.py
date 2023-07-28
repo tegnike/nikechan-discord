@@ -3,11 +3,12 @@ import os
 from datetime import datetime, timedelta
 from pytz import timezone
 from langchain.memory import ChatMessageHistory
-from openai_service import get_openai_response, judge_if_i_response
+from openai_service import get_openai_response, judge_if_i_response, get_join_response
 
 intents = discord.Intents.all()
 discord_key = os.environ['DISCORD_KEY']
-allowed_channels = [1090678631489077331, 1134007804244529212, 1133743935727091773]
+allowed_channels = [1090678631489077331, 1133743935727091773]
+join_channel_id = 1134007804244529212
 master_id = 576031815945420812
 
 class MyClient(discord.Client):
@@ -20,9 +21,12 @@ class MyClient(discord.Client):
         print('Logged in as', self.user)
 
     async def on_message(self, message):
-        if message.channel.id not in allowed_channels:
-            return
+        if message.channel.id in allowed_channels:
+            self.response_message(self, message)
+        elif message.channel.id == join_channel_id:
+            self.response_join_message(self, message)
 
+    async def response_message(self, message):
         # サーバーID取得
         server_id = message.guild.id
 
@@ -101,6 +105,25 @@ class MyClient(discord.Client):
             print('Message send completed.')
         else:
             print('Message was not sent.')
+
+    async def response_join_message(self, message):
+        if message.mentions:
+            user = message.mentions[0]
+            # user_nameを取得
+            user_name = ''
+            if user.nick:
+                user_name = user.nick
+            else:
+                user_name = user.name
+            print('User joined', ':', user_name)
+
+            response = get_join_response(user_name)
+            # メッセージを送信
+            await message.channel.send(response)
+
+            print('Join message completed.')
+        else:
+            print('Nobady joined.')
 
 client = MyClient(intents=intents)
 client.run(discord_key)
