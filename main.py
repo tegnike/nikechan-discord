@@ -65,16 +65,16 @@ class MyClient(discord.Client):
 
 
         need_response = False
-        if self.user in message.mentions:
-            # bot宛のメンションであるかを確認
-            need_response = True
-        elif message.reference is not None:
+        if message.reference is not None:
             # bot宛のリプライであるかを確認
             referenced_message = await message.channel.fetch_message(message.reference.message_id)
             need_response = referenced_message.author == self.user
             # リプライに反応させるようにリプライメッセージを履歴に追加
             print("Referenced message:", referenced_message.content)
             state["history"].add_ai_message(referenced_message.content)
+        elif self.user in message.mentions:
+            # bot宛のメンションであるかを確認
+            need_response = True
         else:
             # 会話歴から次に自分が回答すべきかを判定
             need_response = judge_if_i_response(state["history"])
