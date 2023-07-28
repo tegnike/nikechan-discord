@@ -7,8 +7,8 @@ from openai_service import get_openai_response, judge_if_i_response, get_join_re
 
 intents = discord.Intents.all()
 discord_key = os.environ['DISCORD_KEY']
-allowed_channels = [1090678631489077331, 1133743935727091773]
-join_channel_id = 1134007804244529212
+allowed_channels = [1090678631489077331, 1134007804244529212, 1133743935727091773]
+join_channel_id = 1052887374239105032
 master_id = 576031815945420812
 
 class MyClient(discord.Client):
