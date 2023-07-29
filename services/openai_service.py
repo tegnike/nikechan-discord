@@ -5,16 +5,8 @@ from langchain.schema import (
     AIMessage,
 )
 
-def get_system_message():
-    with open('system_message.txt', 'r') as file:
-        return file.read().strip()
-
-def get_system_message2():
-    with open('system_message2.txt', 'r') as file:
-        return file.read().strip()
-
-def get_system_message3():
-    with open('system_message3.txt', 'r') as file:
+def get_system_message(file_name):
+    with open('services/system_messages/' + file_name, 'r') as file:
         return file.read().strip()
 
 def get_openai_response(history, model_name):
@@ -23,7 +15,7 @@ def get_openai_response(history, model_name):
 
     # OpenAIによる応答生成
     print("latest_messages:", latest_messages)
-    messages = [SystemMessage(content=get_system_message())] + latest_messages
+    messages = [SystemMessage(content=get_system_message("system_message.txt"))] + latest_messages
     chat = ChatOpenAI(model_name=model_name, temperature=0, max_tokens=350)
     response = chat(messages)
 
@@ -44,7 +36,7 @@ def judge_if_i_response(history):
             past_messages += "ニケ: " + latest_message.content + "\n"
 
     # OpenAIによる応答生成
-    messages = [SystemMessage(content=get_system_message2())] + [HumanMessage(content=past_messages)]
+    messages = [SystemMessage(content=get_system_message("system_message2.txt"))] + [HumanMessage(content=past_messages)]
     chat = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=1.0, max_tokens=2)
     response = chat(messages)
 
@@ -53,7 +45,7 @@ def judge_if_i_response(history):
 
 def get_join_response(user_name):
     # OpenAIによる応答生成
-    messages = [SystemMessage(content=get_system_message3())] + [HumanMessage(content=user_name)]
+    messages = [SystemMessage(content=get_system_message("system_message3.txt"))] + [HumanMessage(content=user_name)]
     chat = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0, max_tokens=150)
     response = chat(messages)
 

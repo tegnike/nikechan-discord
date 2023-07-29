@@ -1,17 +1,20 @@
 import discord
+from discord.ext import commands
 import os
-from datetime import datetime, timedelta
-from pytz import timezone
-from langchain.memory import ChatMessageHistory
-from openai_service import get_openai_response, judge_if_i_response, get_join_response
+import traceback
+from dotenv import load_dotenv
+from services.response_service import response_message, response_join_message
+import asyncio
 
-intents = discord.Intents.all()
+load_dotenv()
+
 discord_key = os.environ['DISCORD_KEY']
-allowed_channels = [1090678631489077331, 1134007804244529212, 1133743935727091773]
+allowed_channels = [1090678631489077331, 1134007804244529212, 1133743935727091773, 1090678631489077333, 1114285942375718986]
 join_channel_id = 1052887374239105032
-master_id = 576031815945420812
+intents = discord.Intents.all()
+intents.message_content = True
 
-class MyClient(discord.Client):
+class MyBot(commands.Bot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.states = {}
@@ -22,108 +25,62 @@ class MyClient(discord.Client):
 
     async def on_message(self, message):
         if message.channel.id in allowed_channels:
-            await self.response_message(message)
+            await response_message(self, message)
         elif message.channel.id == join_channel_id:
-            await self.response_join_message(message)
+            await response_join_message(self, message)
+        await super().on_message(message)  # 追加: コマンドを処理するために必要
 
-    async def response_message(self, message):
-        # サーバーID取得
-        server_id = message.guild.id
+    async def on_voice_state_update(self, member, before, after):
+        if before.channel is None:
+            if member.guild.voice_client is None:
+                await asyncio.sleep(0.5)
+                await after.channel.connect()
+        elif after.channel is None:
+            if member.guild.voice_client:
+                if member.guild.voice_client.channel is before.channel:
+                    if len(member.guild.voice_client.channel.members) == 1:
+                        await asyncio.sleep(0.5)
+                        await member.guild.voice_client.disconnect()
+        elif before.channel != after.channel:
+            if member.guild.voice_client:
+                if member.guild.voice_client.channel is before.channel:
+                    if len(member.guild.voice_client.channel.members) == 1 or member.voice.self_mute:
+                        await asyncio.sleep(0.5)
+                        await member.guild.voice_client.disconnect()
+                        await asyncio.sleep(0.5)
+                        await after.channel.connect()
 
-        # サーバーIDがなければ初期化
-        if server_id not in self.states:
-            self.states[server_id] = {
-                "history": ChatMessageHistory(),
-                "count": 0,
-                "current_date": datetime.now(timezone('Europe/Warsaw')).date(),
-            }
+    async def on_command_error(ctx, error):
+        orig_error = getattr(error, 'original', error)
+        error_msg = ''.join(traceback.TracebackException.from_exception(orig_error).format())
+        await ctx.send(error_msg)
 
-        # サーバーIDから状態を取得
-        state = self.states[server_id]
+client = MyBot(command_prefix='.', intents=intents)
 
-        # 日付が変わったらカウントをリセット
-        new_date = datetime.now(timezone('Europe/Warsaw')).date()
-        if new_date > state["current_date"]:
-            state["count"] = 0
-            state["current_date"] = new_date
-
-        # 自分のメッセージは無視 または 100件以上のメッセージは無視
-        if message.author == self.user:
-            print('Message received from self, ignoring.')
-            return
-        if state["count"] > 100:
-            if state["count"] == 100:
-                await message.channel.send("[固定応答]設定上限に達したため、本日の応答は終了します。")
-            print('Message limit.')
-            return
-
-        # auther_nameを取得
-        auther_name = ''
-        if master_id == message.author.id:
-            auther_name = 'マスター'
-        elif message.author.nick:
-            auther_name = message.author.nick
+@client.command()
+async def 接続(ctx):
+    print('command 接続')
+    if ctx.message.guild:
+        if ctx.author.voice is None:
+            await ctx.send('ボイスチャンネルに接続してから呼び出してください。')
         else:
-            auther_name = message.author.name
-        print('Message received from', auther_name, ':', message.content)
-
-
-        need_response = False
-        if message.reference is not None:
-            # bot宛のリプライであるかを確認
-            referenced_message = await message.channel.fetch_message(message.reference.message_id)
-            need_response = referenced_message.author == self.user
-            # リプライに反応させるようにリプライメッセージを履歴に追加
-            print("Referenced message:", referenced_message.content)
-            state["history"].add_ai_message(referenced_message.content)
-        elif self.user in message.mentions:
-            # bot宛のメンションであるかを確認
-            need_response = True
-        else:
-            # 会話歴から次に自分が回答すべきかを判定
-            need_response = judge_if_i_response(state["history"])
-
-        # ユーザーメッセージを会話履歴に追加
-        state["history"].add_user_message(auther_name + ": " + message.content)
-        print("User:", message.content)
-
-        print("AI should response?:", need_response)
-
-        # 応答が必要な場合
-        if need_response:
-            # OpenAIによる応答生成
-            model_name = "gpt-4" if state["count"] <= 20 else "gpt-3.5-turbo"
-            response = get_openai_response(state["history"], model_name)
-            # メッセージを送信
-            await message.channel.send(response)
-
-            if state["count"] == 20:
-                # 20件目のメッセージを送信したら、モデルをGPT-3.5に切り替える
-                await message.channel.send("[固定応答]設定上限に達したため、モデルをGPT-4からGPT-3.5に切り替えます。")
-
-            state["count"] += 1
-            print('Message send completed.')
-        else:
-            print('Message was not sent.')
-
-    async def response_join_message(self, message):
-        if message.mentions:
-            user = message.mentions[0]
-            # user_nameを取得
-            user_name = ''
-            if user.nick:
-                user_name = user.nick
+            if ctx.guild.voice_client:
+                if ctx.author.voice.channel == ctx.guild.voice_client.channel:
+                    await ctx.send('接続済みです。')
+                else:
+                    await ctx.voice_client.disconnect()
+                    await asyncio.sleep(0.5)
+                    await ctx.author.voice.channel.connect()
             else:
-                user_name = user.name
-            print('User joined', ':', user_name)
+                await ctx.author.voice.channel.connect()
 
-            response = get_join_response(user_name)
-            # メッセージを送信
-            await message.channel.send(response)
-
-            print('Join message completed.')
+@client.command()
+async def 切断(ctx):
+    print('command 切断')
+    if ctx.message.guild:
+        if ctx.voice_client is None:
+            await ctx.send('ボイスチャンネルに接続していません。')
         else:
-            print('Nobady joined.')
+            await ctx.voice_client.disconnect()
 
-client = MyClient(intents=intents)
 client.run(discord_key)
