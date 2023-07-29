@@ -9,6 +9,7 @@ import asyncio
 load_dotenv()
 
 discord_key = os.environ['DISCORD_KEY']
+# CryptoJK, AITuberゲーム部, VTuberDAO, CryptoJK音声, AITuberゲーム部音声
 allowed_channels = [1090678631489077331, 1134007804244529212, 1133743935727091773, 1090678631489077333, 1114285942375718986]
 join_channel_id = 1052887374239105032
 intents = discord.Intents.all()
