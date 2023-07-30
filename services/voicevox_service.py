@@ -16,6 +16,6 @@ async def play_voice(message, text):
         print(mp3url)
         while message.guild.voice_client.is_playing():
             await asyncio.sleep(0.5)
+        asyncio.sleep(3)
         source = await discord.FFmpegOpusAudio.from_probe(mp3url)
-        print('source', source)
         message.guild.voice_client.play(source)
