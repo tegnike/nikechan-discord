@@ -1,6 +1,7 @@
 import asyncio
 import discord
 import os
+import requests
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -12,9 +13,12 @@ async def play_voice(message, text):
         # Replace new line
         text = text.replace('\n', '。')
 
-        mp3url = 'services/system_messages/ダウンロード.wav'
-        print(mp3url)
+        mp3url = f'https://deprecatedapis.tts.quest/v2/voicevox/audio/?text={text}&key={voicevox_key}&speaker=46&pitch=-0.02&intonationScale=1.26&speed=0.9'
+        response = requests.get(mp3url)
+        with open('audio.opus', 'wb') as f:
+            f.write(response.content)
+
         while message.guild.voice_client.is_playing():
             await asyncio.sleep(0.5)
-        source = await discord.FFmpegOpusAudio.from_probe(mp3url)
+        source = await discord.FFmpegOpusAudio.from_probe('audio.opus')
         message.guild.voice_client.play(source)
