@@ -33,7 +33,7 @@ class MyBot(commands.Bot):
         await super().on_message(message)  # 追加: コマンドを処理するために必要
 
     async def on_voice_state_update(self, member, before, after):
-        if after.channel.id in allowed_voice_channels:
+        if after.channel is not None and after.channel.id in allowed_voice_channels:
             if before.channel is None:
                 if member.guild.voice_client is None:
                     await asyncio.sleep(0.5)
