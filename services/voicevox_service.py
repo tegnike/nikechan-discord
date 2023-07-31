@@ -21,4 +21,11 @@ async def play_voice(message, text):
         while message.guild.voice_client.is_playing():
             await asyncio.sleep(0.5)
         source = await discord.FFmpegOpusAudio.from_probe('audio.opus')
-        message.guild.voice_client.play(source)
+        try:
+            message.guild.voice_client.play(source)
+        except discord.errors.ClientException:
+            # Not connected to voice error caught, try reconnecting
+            if message.guild.voice_client is not None:
+                await message.guild.voice_client.disconnect()
+            await message.author.voice.channel.connect()
+            message.guild.voice_client.play(source)
