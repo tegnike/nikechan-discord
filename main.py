@@ -24,6 +24,8 @@ class MyBot(commands.Bot):
     async def on_ready(self):
         print('Bot is ready.')
         print('Logged in as', self.user)
+        status_message = "こんにちは！AITuberのニケです！\n何か質問があれば、お気軽にお声掛けください！\n\n音声：VOICEVOX 小夜/SAYO"
+        await self.change_presence(activity=discord.Game(name=status_message))
 
     async def on_message(self, message):
         if message.channel.id in allowed_channels:
