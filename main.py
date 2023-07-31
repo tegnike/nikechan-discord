@@ -9,8 +9,9 @@ import asyncio
 load_dotenv()
 
 discord_key = os.environ['DISCORD_KEY']
-# CryptoJK, AITuberゲーム部, VTuberDAO, CryptoJK音声, AITuberゲーム部音声
-allowed_channels = [1090678631489077331, 1134007804244529212, 1133743935727091773, 1090678631489077333, 1114285942375718986]
+# CryptoJK, AITuberゲーム部, VTuberDAO, CryptoJK音声, AITuberゲーム部音声, VTuberDAO音声
+allowed_channels = [1090678631489077331, 1134007804244529212, 1133743935727091773, 1090678631489077333, 1114285942375718986, 1135457812982530068]
+allowed_voice_channels = [1090678631489077333, 1114285942375718986, 1135457812982530068]
 join_channel_id = 1052887374239105032
 intents = discord.Intents.all()
 intents.message_content = True
@@ -32,24 +33,25 @@ class MyBot(commands.Bot):
         await super().on_message(message)  # 追加: コマンドを処理するために必要
 
     async def on_voice_state_update(self, member, before, after):
-        if before.channel is None:
-            if member.guild.voice_client is None:
-                await asyncio.sleep(0.5)
-                await after.channel.connect()
-        elif after.channel is None:
-            if member.guild.voice_client:
-                if member.guild.voice_client.channel is before.channel:
-                    if len(member.guild.voice_client.channel.members) == 1:
-                        await asyncio.sleep(0.5)
-                        await member.guild.voice_client.disconnect()
-        elif before.channel != after.channel:
-            if member.guild.voice_client:
-                if member.guild.voice_client.channel is before.channel:
-                    if len(member.guild.voice_client.channel.members) == 1 or member.voice.self_mute:
-                        await asyncio.sleep(0.5)
-                        await member.guild.voice_client.disconnect()
-                        await asyncio.sleep(0.5)
-                        await after.channel.connect()
+        if after.channel.id in allowed_voice_channels:
+            if before.channel is None:
+                if member.guild.voice_client is None:
+                    await asyncio.sleep(0.5)
+                    await after.channel.connect()
+            elif after.channel is None:
+                if member.guild.voice_client:
+                    if member.guild.voice_client.channel is before.channel:
+                        if len(member.guild.voice_client.channel.members) == 1:
+                            await asyncio.sleep(0.5)
+                            await member.guild.voice_client.disconnect()
+            elif before.channel != after.channel:
+                if member.guild.voice_client:
+                    if member.guild.voice_client.channel is before.channel:
+                        if len(member.guild.voice_client.channel.members) == 1 or member.voice.self_mute:
+                            await asyncio.sleep(0.5)
+                            await member.guild.voice_client.disconnect()
+                            await asyncio.sleep(0.5)
+                            await after.channel.connect()
 
     async def on_command_error(ctx, error):
         orig_error = getattr(error, 'original', error)

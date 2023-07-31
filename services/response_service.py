@@ -5,7 +5,7 @@ from services.openai_service import get_openai_response, judge_if_i_response, ge
 from services.voicevox_service import play_voice
 
 master_id = 576031815945420812
-allowed_voice_channels = [1090678631489077333, 1114285942375718986]
+allowed_voice_channels = [1090678631489077333, 1114285942375718986, 1135457812982530068]
 
 async def response_message(self, message):
     # サーバーID取得
