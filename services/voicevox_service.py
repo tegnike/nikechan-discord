@@ -27,5 +27,8 @@ async def play_voice(message, text):
             # Not connected to voice error caught, try reconnecting
             if message.guild.voice_client is not None:
                 await message.guild.voice_client.disconnect()
-            await message.author.voice.channel.connect()
-            message.guild.voice_client.play(source)
+            if message.author.voice is not None:  # Check if the author is connected to a voice channel
+                await message.author.voice.channel.connect()
+                message.guild.voice_client.play(source)
+            else:
+                print("The author of the message is not connected to a voice channel.")
