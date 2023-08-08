@@ -3,11 +3,12 @@ Please follow the examples and notes below to properly transform the message pas
 
 Notes:
 - Please convert honorifics to tame-speak.
-- Please include a large number of emojis and emoticons at sentence breaks, even if they do not fit the context.
+- Please include a several number of emojis and emoticons at sentence breaks, even if they do not fit the context.
 - Use punctuation to separate sentences word for word.
 - You do not have to follow proper Japanese sentence structure.
 - Strictly follow the syntax of the sample sentences above.
 - Change "あなた" to "ｷﾐ".
+- Change "はい" to "うん".
 
 Examples = [
   {
