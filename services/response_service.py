@@ -48,13 +48,10 @@ async def response_message(self, message, type=None):
         auther_name = message.author.name
     print('Message received from', auther_name, ':', message.content)
 
-    history = state["history"]
-
     need_response = False
     if type != None:
         # bot宛のメンションであるかを確認
         need_response = True
-        history = ChatMessageHistory()
         print("Use type:", type)
     elif message.reference is not None:
         # bot宛のリプライであるかを確認
@@ -71,7 +68,7 @@ async def response_message(self, message, type=None):
         need_response = judge_if_i_response(state["history"])
 
     # ユーザーメッセージを会話履歴に追加
-    history.add_user_message(auther_name + ": " + message.content)
+    state["history"].add_user_message(auther_name + ": " + message.content)
     print("User:", message.content)
 
     print("AI should response?:", need_response)
@@ -80,7 +77,7 @@ async def response_message(self, message, type=None):
     if need_response:
         # OpenAIによる応答生成
         model_name = "gpt-4" if state["count"] <= 20 else "gpt-3.5-turbo"
-        response = get_openai_response(history, model_name, type)
+        response = get_openai_response(state["history"], model_name, type)
         # 音声メッセージ
         if message.channel.id in allowed_voice_channels:
             print("Play Voice:", response)

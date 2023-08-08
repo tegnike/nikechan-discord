@@ -15,17 +15,18 @@ def get_openai_response(history, model_name, type=None):
 
     # OpenAIによる応答生成
     print("latest_messages:", latest_messages)
-
-
-    type_file = "response_message_oji.txt" if type == 'oji' else "response_message.txt"
-
-    messages = [SystemMessage(content=get_system_message(type_file))] + latest_messages
+    messages = [SystemMessage(content=get_system_message("response_message.txt"))] + latest_messages
     chat = ChatOpenAI(model_name=model_name, temperature=0, max_tokens=350)
     response = chat(messages)
 
     # 会話履歴を更新
     history.add_ai_message(response.content)
     print("AI:", response.content)
+
+    if type != None:
+        messages = [SystemMessage(content=get_system_message("message_convert_oji.txt"))] + [HumanMessage(content=response.content)]
+        chat = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0)
+        response = chat(messages)
 
     return response.content
 
