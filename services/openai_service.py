@@ -24,7 +24,7 @@ def get_openai_response(history, model_name, type=None):
     print("AI:", response.content)
 
     if type != None:
-        messages = [SystemMessage(content=get_system_message("message_convert_oji.txt"))] + [HumanMessage(content=response.content)]
+        messages = [SystemMessage(content=get_system_message("message_convert_oji.txt"))] + [HumanMessage(content=("変換前文章：" + response.content))]
         chat = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0)
         response = chat(messages)
 
