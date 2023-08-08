@@ -9,13 +9,17 @@ def get_system_message(file_name):
     with open('services/system_messages/' + file_name, 'r') as file:
         return file.read().strip()
 
-def get_openai_response(history, model_name):
+def get_openai_response(history, model_name, type=None):
     # 過去15件のメッセージを取得
     latest_messages = history.messages[-15:]
 
     # OpenAIによる応答生成
     print("latest_messages:", latest_messages)
-    messages = [SystemMessage(content=get_system_message("response_message.txt"))] + latest_messages
+
+
+    type_file = "response_message_oji.txt" if type == 'oji' else "response_message.txt"
+
+    messages = [SystemMessage(content=get_system_message(type_file))] + latest_messages
     chat = ChatOpenAI(model_name=model_name, temperature=0, max_tokens=350)
     response = chat(messages)
 

@@ -10,11 +10,18 @@ load_dotenv()
 
 discord_key = os.environ['DISCORD_KEY']
 # CryptoJK, AITuberゲーム部, VTuberDAO, CryptoJK音声, AITuberゲーム部音声, VTuberDAO音声
+# allowed_channels = [1090678631489077331]
 allowed_channels = [1090678631489077331, 1134007804244529212, 1133743935727091773, 1090678631489077333, 1114285942375718986, 1135457812982530068]
 allowed_voice_channels = [1090678631489077333, 1114285942375718986, 1135457812982530068]
 join_channel_id = 1052887374239105032
 intents = discord.Intents.all()
 intents.message_content = True
+
+async def handle_message_processing(bot, message, type=None):
+    if message.channel.id in allowed_channels:
+        await response_message(bot, message, type)
+    elif message.channel.id == join_channel_id:
+        await response_join_message(bot, message)
 
 class MyBot(commands.Bot):
     def __init__(self, *args, **kwargs):
@@ -28,11 +35,8 @@ class MyBot(commands.Bot):
         await self.change_presence(activity=discord.Game(name=status_message))
 
     async def on_message(self, message):
-        if message.channel.id in allowed_channels:
-            await response_message(self, message)
-        elif message.channel.id == join_channel_id:
-            await response_join_message(self, message)
-        await super().on_message(message)  # 追加: コマンドを処理するために必要
+        await handle_message_processing(self, message)
+        await super().on_message(message)
 
     async def on_voice_state_update(self, member, before, after):
         if after.channel is not None and after.channel.id in allowed_voice_channels or before.channel is not None and before.channel.id in allowed_voice_channels:
@@ -55,12 +59,12 @@ class MyBot(commands.Bot):
                             await asyncio.sleep(0.5)
                             await after.channel.connect()
 
-    async def on_command_error(ctx, error):
+    async def on_command_error(self, ctx, error):
         orig_error = getattr(error, 'original', error)
         error_msg = ''.join(traceback.TracebackException.from_exception(orig_error).format())
         await ctx.send(error_msg)
 
-client = MyBot(command_prefix='.', intents=intents)
+client = MyBot(command_prefix='/', intents=intents)
 
 @client.command()
 async def 接続(ctx):
@@ -87,5 +91,9 @@ async def 切断(ctx):
             await ctx.send('ボイスチャンネルに接続していません。')
         else:
             await ctx.voice_client.disconnect()
+
+@client.command(name='oji', description="おじさん構文で返答します")
+async def oji(ctx):
+    await handle_message_processing(ctx.bot, ctx.message, 'oji')
 
 client.run(discord_key)

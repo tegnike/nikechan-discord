@@ -7,7 +7,7 @@ from services.voicevox_service import play_voice
 master_id = 576031815945420812
 allowed_voice_channels = [1090678631489077333, 1114285942375718986, 1135457812982530068]
 
-async def response_message(self, message):
+async def response_message(self, message, type=None):
     # サーバーID取得
     server_id = message.guild.id
 
@@ -48,9 +48,12 @@ async def response_message(self, message):
         auther_name = message.author.name
     print('Message received from', auther_name, ':', message.content)
 
-
     need_response = False
-    if message.reference is not None:
+    if type != None:
+        # bot宛のメンションであるかを確認
+        need_response = True
+        print("Use type:", type)
+    elif message.reference is not None:
         # bot宛のリプライであるかを確認
         referenced_message = await message.channel.fetch_message(message.reference.message_id)
         need_response = referenced_message.author == self.user
@@ -74,7 +77,7 @@ async def response_message(self, message):
     if need_response:
         # OpenAIによる応答生成
         model_name = "gpt-4" if state["count"] <= 20 else "gpt-3.5-turbo"
-        response = get_openai_response(state["history"], model_name)
+        response = get_openai_response(state["history"], model_name, type)
         # 音声メッセージ
         if message.channel.id in allowed_voice_channels:
             print("Play Voice:", response)
