@@ -126,6 +126,7 @@ def get_openai_response(history, model_name, type=None):
         function_message = FunctionMessage(name=function_name, content=function_response)
         messages.append(function_message)
 
+        print("messages with Function Calling:", messages)
         # FuncitonMessageを元に、AIの回答を取得
         second_response = llm.predict_messages(
             messages=messages, functions=functions
