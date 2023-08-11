@@ -101,7 +101,6 @@ def get_openai_response(history, model_name, type=None):
 
     # 会話履歴を更新
     history.add_ai_message(response.content)
-    print("AI:", response.content)
 
     if response.additional_kwargs:
         # function_call = response["choices"][0]["message"].get("function_call")
@@ -131,6 +130,7 @@ def get_openai_response(history, model_name, type=None):
         second_response = llm.predict_messages(
             messages=messages, functions=functions
         )
+        print("AI with Function Calling:", second_response.content)
         if type != None:
             messages = [SystemMessage(content=get_system_message("message_convert_oji.txt"))] + [HumanMessage(content=("変換前文章：" + second_response.content))]
             chat = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0)
@@ -139,6 +139,7 @@ def get_openai_response(history, model_name, type=None):
         else:
             return second_response.content
     else:
+        print("AI:", response.content)
         if type != None:
             messages = [SystemMessage(content=get_system_message("message_convert_oji.txt"))] + [HumanMessage(content=("変換前文章：" + response.content))]
             chat = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0)
