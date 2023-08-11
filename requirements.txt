@@ -1,6 +1,7 @@
 discord.py
 pytz
-langchain
+langchain>0.0.244
 openai
 python-dotenv
 PyNaCl
+google-search-results
