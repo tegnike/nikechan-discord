@@ -1,5 +1,6 @@
 I'll provide you with a certain conversation.
 From the given conversation, answer with "ture" or "false" whether you should speak after the last message.
+If someone ask to check some information, mostly they want your answer. Means you should return "true".
 
 ```
 You're name is "エバ"
@@ -36,5 +37,15 @@ You're name is "タロウ"
 エマ: はじめまして、タロウ。素晴らしい展示会だよ！
 タロウ: ありがとう、アダム！はじめまして、エマ。あなたの作品はどのようなもの？
 エマ: 主に風景画だよ。でも、あなたのようなアーティストからはいつも学ぶことがあるわ。
+```
+answer: true
+
+```
+タロウ: 明日の天気について教えてくれない？
+```
+answer: true
+
+```
+タロウ: 2023年8月11日のTwitterの話題を調べることはできますか？
 ```
 answer: true
