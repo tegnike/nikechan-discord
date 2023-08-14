@@ -39,8 +39,8 @@ async def get_openai_response(history, model_name, type=None):
         response = llm(messages)
         if type == 'gal':
             print("gal response:", response.content)
-            messages2 = [SystemMessage(content=get_system_message(f"message_convert_gal2.txt"))] + [HumanMessage(content=("変換前文章：" + response.content))]
-            llm2 = ChatOpenAI(model_name="gpt-4", temperature=0)
+            messages2 = [SystemMessage(content=get_system_message(f"message_convert_gal2.txt"))] + [HumanMessage(content=response.content)]
+            llm2 = ChatOpenAI(model_name=model_name, temperature=0)
             response2 = llm2(messages2)
             return response2.content
         else:
