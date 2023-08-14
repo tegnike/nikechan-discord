@@ -31,9 +31,9 @@ functions = [
     }
 ]
 
-def ask_function_calling(history):
+async def ask_function_calling(history):
     print("function_calling start")
-    MAX_REQUEST_COUNT = 10
+    MAX_REQUEST_COUNT = 5
     llm=ChatOpenAI(model_name='gpt-3.5-turbo-0613')
     # ユーザーの入力をmessagesに格納
     messages = [SystemMessage(content="必要に応じ、与えられた情報を元に回答してください。情報を見つけられなかったという回答は許されません")] + history

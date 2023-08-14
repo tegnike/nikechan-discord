@@ -9,13 +9,13 @@ def get_system_message(file_name):
     with open('services/system_messages/' + file_name, 'r') as file:
         return file.read().strip()
 
-def get_openai_response(history, model_name, type=None):
+async def get_openai_response(history, model_name, type=None):
     # 過去15件のメッセージを取得
     latest_messages = history.messages[-15:]
     print("latest_messages:", latest_messages)
 
     # functuion_calling
-    function_calling_result = ask_function_calling(history.messages[-15:])
+    function_calling_result = await ask_function_calling(history.messages[-15:])
     if function_calling_result != None:
         print("function calling: True")
         print("function calling result:", function_calling_result)
@@ -34,10 +34,17 @@ def get_openai_response(history, model_name, type=None):
     print("AI:", response_message)
 
     if type != None:
-        messages = [SystemMessage(content=get_system_message("message_convert_oji.txt"))] + [HumanMessage(content=("変換前文章：" + response_message))]
+        messages = [SystemMessage(content=get_system_message(f"message_convert_{type}.txt"))] + [HumanMessage(content=("変換前文章：" + response_message))]
         llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0)
         response = llm(messages)
-        return response.content
+        if type == 'gal':
+            print("gal response:", response.content)
+            messages2 = [SystemMessage(content=get_system_message(f"message_convert_gal2.txt"))] + [HumanMessage(content=("変換前文章：" + response.content))]
+            llm2 = ChatOpenAI(model_name="gpt-4", temperature=0)
+            response2 = llm2(messages2)
+            return response2.content
+        else:
+            return response.content
     else:
         return response_message
 
