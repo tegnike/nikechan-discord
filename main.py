@@ -95,4 +95,8 @@ async def 切断(ctx):
 async def oji(ctx):
     await handle_message_processing(ctx.bot, ctx.message, 'oji')
 
+@client.command(name='gal', description="ギャル構文で返答します")
+async def gal(ctx):
+    await handle_message_processing(ctx.bot, ctx.message, 'gal')
+
 client.run(discord_key)
