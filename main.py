@@ -15,6 +15,7 @@ allowed_voice_channels = [1090678631489077333, 1114285942375718986, 113545781298
 join_channel_id = 1052887374239105032
 intents = discord.Intents.all()
 intents.message_content = True
+command_prefix='/'
 
 async def handle_message_processing(bot, message, type=None):
     if message.channel.id in allowed_channels:
@@ -34,7 +35,16 @@ class MyBot(commands.Bot):
         await self.change_presence(activity=discord.Game(name=status_message))
 
     async def on_message(self, message):
-        await handle_message_processing(self, message)
+        if message.content.startswith(command_prefix):
+            command_name = message.content[len(command_prefix):].split(' ', 1)[0]
+            if not self.get_command(command_name):
+                # コマンドが存在しない場合の処理
+                return
+        elif not message.content.startswith(command_prefix) and message.channel.id in allowed_channels:
+            await response_message(self, message)
+        elif message.channel.id == join_channel_id:
+            await response_join_message(self, message)
+
         await super().on_message(message)
 
     async def on_voice_state_update(self, member, before, after):
@@ -63,7 +73,7 @@ class MyBot(commands.Bot):
         error_msg = ''.join(traceback.TracebackException.from_exception(orig_error).format())
         await ctx.send(error_msg)
 
-client = MyBot(command_prefix='/', intents=intents)
+client = MyBot(command_prefix=command_prefix, intents=intents)
 
 @client.command()
 async def 接続(ctx):
@@ -93,10 +103,10 @@ async def 切断(ctx):
 
 @client.command(name='oji', description="おじさん構文で返答します")
 async def oji(ctx):
-    await handle_message_processing(ctx.bot, ctx.message, 'oji')
+    await response_message(ctx.bot, ctx.message, 'oji')
 
 @client.command(name='gal', description="ギャル構文で返答します")
 async def gal(ctx):
-    await handle_message_processing(ctx.bot, ctx.message, 'gal')
+    await response_message(ctx.bot, ctx.message, 'gal')
 
 client.run(discord_key)
