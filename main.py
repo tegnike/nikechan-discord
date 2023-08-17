@@ -18,7 +18,6 @@ intents = discord.Intents.all()
 intents.message_content = True
 command_prefix='/'
 
-
 async def handle_message_processing(bot, message, type=None):
     if message.channel.id in allowed_channels:
         await response_message(bot, message, type)
