@@ -48,7 +48,7 @@ async def get_openai_response(history, model_name, type=None):
     else:
         return response_message
 
-def judge_if_i_response(history):
+async def judge_if_i_response(history):
     # 過去5件のメッセージを取得
     latest_messages = history.messages[-5:]
     past_messages = "You're name is 'ニケ'\n"
@@ -66,7 +66,7 @@ def judge_if_i_response(history):
     result = response.content.lower()
     return result == "true"
 
-def get_join_response(user_name):
+async def get_join_response(user_name):
     # OpenAIによる応答生成
     messages = [SystemMessage(content=get_system_message("join_message.txt"))] + [HumanMessage(content=user_name)]
     chat = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0, max_tokens=150)

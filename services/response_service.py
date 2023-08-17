@@ -42,7 +42,7 @@ async def response_message(self, message, type=None):
     auther_name = ''
     if master_id == message.author.id:
         auther_name = 'マスター'
-    elif message.author.nick:
+    elif hasattr(message.author, 'nick') and message.author.nick:
         auther_name = message.author.nick
     else:
         auther_name = message.author.name
@@ -65,7 +65,7 @@ async def response_message(self, message, type=None):
         need_response = True
     else:
         # 会話歴から次に自分が回答すべきかを判定
-        need_response = judge_if_i_response(state["history"])
+        need_response = await judge_if_i_response(state["history"])
 
     # ユーザーメッセージを会話履歴に追加
     state["history"].add_user_message(auther_name + ": " + message.content)
@@ -106,7 +106,7 @@ async def response_join_message(self, message):
             user_name = user.name
         print('User joined', ':', user_name)
 
-        response = get_join_response(user_name)
+        response = await get_join_response(user_name)
         # メッセージを送信
         await message.channel.send(response)
 
