@@ -9,8 +9,9 @@ import asyncio
 load_dotenv()
 
 discord_key = os.environ['DISCORD_KEY']
-# CryptoJK, AITuberゲーム部, VTuberDAO, CryptoJK音声, AITuberゲーム部音声, VTuberDAO音声, AI画像（わど）
-allowed_channels = [1090678631489077331] if os.environ['ENVIRONMENT'] == 'development' else [1134007804244529212, 1133743935727091773, 1090678631489077333, 1114285942375718986, 1135457812982530068, 1140955884885917757]
+# CryptoJK, AITuberゲーム部, VTuberDAO, CryptoJK音声, AITuberゲーム部音声, VTuberDAO音声, AI画像（わど）、Little Girl Warriors
+allowed_channels = [1090678631489077331] if os.environ['ENVIRONMENT'] == 'development' else [1134007804244529212, 1133743935727091773, 1090678631489077333, 1114285942375718986, 1135457812982530068, 1140955884885917757, 1079634489317281812]
+# CryptoJK音声, AITuberゲーム部音声, VTuberDAO音声
 allowed_voice_channels = [1090678631489077333, 1114285942375718986, 1135457812982530068]
 join_channel_id = 1052887374239105032
 intents = discord.Intents.all()
