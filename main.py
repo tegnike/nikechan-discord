@@ -5,6 +5,8 @@ import traceback
 from dotenv import load_dotenv
 from services.response_service import response_message, response_join_message
 import asyncio
+import json
+import random
 
 load_dotenv()
 
@@ -18,12 +20,6 @@ intents = discord.Intents.all()
 intents.message_content = True
 command_prefix='/'
 
-async def handle_message_processing(bot, message, type=None):
-    if message.channel.id in allowed_channels:
-        await response_message(bot, message, type)
-    elif message.channel.id == join_channel_id:
-        await response_join_message(bot, message)
-
 class MyBot(commands.Bot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -36,17 +32,26 @@ class MyBot(commands.Bot):
         await self.change_presence(activity=discord.Game(name=status_message))
 
     async def on_message(self, message):
-        if message.content.startswith(command_prefix):
-            command_name = message.content[len(command_prefix):].split(' ', 1)[0]
-            if not self.get_command(command_name):
-                # コマンドが存在しない場合の処理
-                return
-        elif not message.content.startswith(command_prefix) and message.channel.id in allowed_channels:
-            await response_message(self, message)
-        elif message.channel.id == join_channel_id:
-            await response_join_message(self, message)
+        try:
+            if message.content.startswith(command_prefix):
+                command_name = message.content[len(command_prefix):].split(' ', 1)[0]
+                if not self.get_command(command_name):
+                    # コマンドが存在しない場合の処理
+                    return
+            elif not message.content.startswith(command_prefix) and message.channel.id in allowed_channels:
+                await response_message(self, message)
+            elif message.channel.id == join_channel_id:
+                await response_join_message(self, message)
 
-        await super().on_message(message)
+            await super().on_message(message)
+        except Exception as e:
+            # ファイルからメッセージをロード
+            with open('services/scripts/error_messages', 'r') as f:
+                error_messages = json.load(f)
+
+            # メッセージリストからランダムに選択
+            await message.channel.send(random.choice(error_messages))
+            print(f"Error: {e}")
 
     async def on_voice_state_update(self, member, before, after):
         if after.channel is not None and after.channel.id in allowed_voice_channels or before.channel is not None and before.channel.id in allowed_voice_channels:
