@@ -115,4 +115,8 @@ async def oji(ctx):
 async def gal(ctx):
     await response_message(ctx.bot, ctx.message, 'gal')
 
+@client.command(name='mesugaki', description="メスガキ構文で返答します")
+async def mesugaki(ctx):
+    await response_message(ctx.bot, ctx.message, 'mesugaki')
+
 client.run(discord_key)
