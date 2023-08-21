@@ -17,6 +17,8 @@ async def response_message(self, message, type=None):
             "history": ChatMessageHistory(),
             "count": 0,
             "current_date": datetime.now(timezone('Europe/Warsaw')).date(),
+            "type": "base",
+            "last_message": datetime.now(timezone('Europe/Warsaw'))
         }
 
     # サーバーIDから状態を取得
@@ -48,11 +50,20 @@ async def response_message(self, message, type=None):
         auther_name = message.author.name
     print('Message received from', auther_name, ':', message.content)
 
+    # タイプを切り替え
+    if type != None:
+        state["type"] = type
+    elif (datetime.now(timezone('Europe/Warsaw')) - state["last_message"]).days >= 1:
+        state["type"] = 'base'
+    else:
+        state["type"] = state["type"]
+
     need_response = False
     if type != None:
+        state["type"] = type
         # bot宛のメンションであるかを確認
         need_response = True
-        print("Use type:", type)
+        print("Switch type:", type)
     elif message.reference is not None:
         # bot宛のリプライであるかを確認
         referenced_message = await message.channel.fetch_message(message.reference.message_id)
@@ -77,7 +88,7 @@ async def response_message(self, message, type=None):
     if need_response:
         # OpenAIによる応答生成
         model_name = "gpt-4" if state["count"] <= 20 else "gpt-3.5-turbo"
-        response = await get_openai_response(state["history"], model_name, type)
+        response = await get_openai_response(state["history"], model_name, state["type"])
         # 音声メッセージ
         if message.channel.id in allowed_voice_channels:
             print("Play Voice:", response)
@@ -85,6 +96,7 @@ async def response_message(self, message, type=None):
 
         # メッセージを送信
         await message.channel.send(response)
+        state["last_message"] = datetime.now(timezone('Europe/Warsaw'))
 
         if state["count"] == 20:
             # 20件目のメッセージを送信したら、モデルをGPT-3.5に切り替える
