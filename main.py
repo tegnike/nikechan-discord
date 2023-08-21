@@ -107,6 +107,10 @@ async def 切断(ctx):
         else:
             await ctx.voice_client.disconnect()
 
+@client.command(name='base', description="通常のニケちゃんで返答します")
+async def base(ctx):
+    await response_message(ctx.bot, ctx.message, 'base')
+
 @client.command(name='oji', description="おじさん構文で返答します")
 async def oji(ctx):
     await response_message(ctx.bot, ctx.message, 'oji')

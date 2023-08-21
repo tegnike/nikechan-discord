@@ -4,12 +4,32 @@ from langchain.schema import (
     HumanMessage
 )
 from services.function_calling_service import ask_function_calling
+import json
 
 def get_system_message(file_name):
     with open('services/system_messages/' + file_name, 'r') as file:
         return file.read().strip()
 
-async def get_openai_response(history, model_name, type=None):
+def get_response_system_message(type):
+    # 置換文字列が書かれたJSONファイルを読み込む
+    with open(f'services/system_messages/system_{type}.json', 'r', encoding='utf-8') as file:
+        replacement_dict = json.load(file)
+
+    # 元の文章のtxtファイルを読み込む
+    with open('services/system_messages/response_message.txt', 'r', encoding='utf-8') as file:
+        content = file.read()
+
+    # 文章の中の特定の英字を探す & その英字を先ほどの辞書に基づいて置換する
+    for original, replacement in replacement_dict.items():
+        if original == "{{EXAMPLES}}":
+            replacement = json.dumps(replacement, ensure_ascii=False, indent=2)
+        if original == "{{NOTE}}":
+            replacement = ' '.join(replacement)
+        content = content.replace(original, replacement)
+
+    return content
+
+async def get_openai_response(history, model_name, type):
     # 過去15件のメッセージを取得
     latest_messages = history.messages[-15:]
     print("latest_messages:", latest_messages)
@@ -24,28 +44,29 @@ async def get_openai_response(history, model_name, type=None):
         print("function calling: False")
 
     # OpenAIによる応答生成
-    messages = [SystemMessage(content=get_system_message("response_message.txt"))] + latest_messages
+    messages = [SystemMessage(content=get_response_system_message(type))] + latest_messages
     llm = ChatOpenAI(model_name=model_name, temperature=0, max_tokens=350)
     response = llm(messages)
     response_message = response.content
 
-    # 会話履歴を更新
-    history.add_ai_message(response_message)
     print("AI:", response_message)
 
-    if type != None:
-        messages = [SystemMessage(content=get_system_message(f"message_convert_{type}.txt"))] + [HumanMessage(content=("変換前文章：" + response_message))]
+    if type != 'base':
+        messages = [SystemMessage(content="次の発言をAIが回答するような、丁寧な口調に戻してください。")] + [HumanMessage(content=(response_message))]
         llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0)
         response = llm(messages)
+        # 通常口調に戻してから会話履歴を更新
+        history.add_ai_message(response.content)
         if type == 'gal':
-            print("gal response:", response.content)
-            messages2 = [SystemMessage(content=get_system_message(f"message_convert_gal2.txt"))] + [HumanMessage(content=response.content)]
+            messages2 = [SystemMessage(content=get_system_message(f"message_convert_galmoji.txt"))] + [HumanMessage(content=response.content)]
             llm2 = ChatOpenAI(model_name=model_name, temperature=0)
             response2 = llm2(messages2)
             return response2.content
         else:
-            return response.content
+            return response_message
     else:
+        # 会話履歴を更新
+        history.add_ai_message(response_message)
         return response_message
 
 async def judge_if_i_response(history):
