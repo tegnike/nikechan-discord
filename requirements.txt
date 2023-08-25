@@ -5,3 +5,6 @@ openai
 python-dotenv
 PyNaCl
 google-search-results
+pymongo
+dnspython
+hupper

@@ -7,9 +7,9 @@ from services.response_service import response_message, response_join_message
 import asyncio
 import json
 import random
+from pymongo import MongoClient
 
 load_dotenv()
-
 
 discord_key = os.environ['DISCORD_KEY']
 # CryptoJK, AITuberゲーム部, VTuberDAO, CryptoJK音声, AITuberゲーム部音声, VTuberDAO音声, AI画像（わど）、Little Girl Warriors、ExC、CryptoM
@@ -24,7 +24,18 @@ command_prefix='/'
 class MyBot(commands.Bot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.states = {}
+
+        # MongoDBに接続
+        client = None
+        if os.environ['ENVIRONMENT'] == 'development':
+            client = MongoClient('localhost', 27018, username='root', password='password')
+        else:
+            client = MongoClient('mongodb+srv://user:uxwl6GjFSXPkNvZJ@cluster0.njarmyw.mongodb.net/?retryWrites=true&w=majority')
+
+        # nikechan_botという名前のデータベースを取得（なかったら勝手に作成）
+        db = client.nikechan_bot
+        # データベースのstatesコレクションを取得（なかったら勝手に作成、コレクション=RDBMSのテーブル）
+        self.mongo_collection = db.states
 
     async def on_ready(self):
         print('Bot is ready.')
@@ -50,8 +61,12 @@ class MyBot(commands.Bot):
             with open('services/scripts/error_messages', 'r') as f:
                 error_messages = json.load(f)
 
-            # メッセージリストからランダムに選択
-            await message.channel.send(random.choice(error_messages))
+            if e == 'You exceeded your current quota, please check your plan and billing details.':
+                print('API制限に達しました。')
+                await message.channel.send(random.choice(error_messages))
+            else:
+                # メッセージリストからランダムに選択
+                await message.channel.send(random.choice(error_messages))
             print(f"Error: {e}")
 
     async def on_voice_state_update(self, member, before, after):

@@ -3,6 +3,10 @@ from pytz import timezone
 from langchain.memory import ChatMessageHistory
 from services.openai_service import get_openai_response, judge_if_i_response, get_join_response
 from services.voicevox_service import play_voice
+from langchain.schema import (
+    SystemMessage,
+    HumanMessage
+)
 
 master_id = 576031815945420812
 allowed_voice_channels = [1090678631489077333, 1114285942375718986, 1135457812982530068]
@@ -11,18 +15,22 @@ async def response_message(self, message, type=None):
     # サーバーID取得
     server_id = message.guild.id
 
-    # サーバーIDがなければ初期化
-    if server_id not in self.states:
-        self.states[server_id] = {
+    # サーバーIDから状態を取得、なければ初期化
+    state = self.mongo_collection.find_one({"server_id": server_id})
+    if state == None:
+        state = {
+            "server_id": server_id,
             "history": ChatMessageHistory(),
             "count": 0,
             "current_date": datetime.now(timezone('Europe/Warsaw')).date(),
             "type": "base",
-            "last_message": datetime.now(timezone('Europe/Warsaw'))
+            "last_message": datetime.now(timezone('Europe/Warsaw')),
+            "is_daily_limit": False,
+            "is_monthly_limit": False,
         }
-
-    # サーバーIDから状態を取得
-    state = self.states[server_id]
+        to_mongo(state)
+        self.mongo_collection.insert_one(state)
+    from_mongo(state)
 
     # 日付が変わったらカウントをリセット
     new_date = datetime.now(timezone('Europe/Warsaw')).date()
@@ -107,6 +115,10 @@ async def response_message(self, message, type=None):
     else:
         print('Message was not sent.')
 
+    # 状態を更新
+    to_mongo(state)
+    self.mongo_collection.update_one({"server_id": server_id}, {"$set": state})
+
 async def response_join_message(self, message):
     if message.mentions:
         user = message.mentions[0]
@@ -125,3 +137,31 @@ async def response_join_message(self, message):
         print('Join message completed.')
     else:
         print('Nobady joined.')
+
+# MongoDBに保存する用にデータを変換
+def to_mongo(state):
+    messages = []
+    for message in state["history"].messages:
+        role = "user" if isinstance(message, HumanMessage) else "assistant"
+        messages.append({
+            "role": role,
+            "content": message.content
+        })
+    state["history"] = messages
+
+    state["current_date"] = state["current_date"].strftime('%Y-%m-%d')
+    state["last_message"] = state["last_message"].strftime('%Y-%m-%d %H:%M:%S')
+
+# MongoDBのデータをpythonで使用できるように変換
+def from_mongo(state):
+    history = ChatMessageHistory()
+    for message in state["history"]:
+        if message["role"] == "user":
+            history.add_user_message(message["content"])
+        else:
+            history.add_ai_message(message["content"])
+    state["history"] = history
+
+    # state["current_date"] = '2023-08-25'をdate型に変換
+    state["current_date"] = datetime.strptime(state["current_date"], '%Y-%m-%d').date()
+    state["last_message"] = datetime.strptime(state["last_message"], '%Y-%m-%d %H:%M:%S').astimezone(timezone('Europe/Warsaw'))
