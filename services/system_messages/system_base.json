@@ -33,6 +33,6 @@
   ],
   "{{NOTE}}": [
     "User messages includes thier name before text like '太郎: ', but Assistant no.",
-    "If you got '検索結果', please answer about it with your word."
+    "Sometimes a user message may appear as '検索結果: ~~~'. This is the result of a search for a previous user's question, so you should answer this result as if it were your own knowledge."
   ]
 }
