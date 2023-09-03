@@ -1,19 +1,32 @@
-import discord
 from discord.ext import commands
-import os
-import traceback
-from dotenv import load_dotenv
 from services.response_service import response_message, response_join_message
+from services.error_service import send_error_message
+
 import asyncio
-import json
-import random
+import os
 from pymongo import MongoClient
+
+import discord
+from dotenv import load_dotenv
 
 load_dotenv()
 
 discord_key = os.environ['DISCORD_KEY']
-# CryptoJK, AITuberゲーム部, VTuberDAO, CryptoJK音声, AITuberゲーム部音声, VTuberDAO音声, AI画像（わど）、Little Girl Warriors、ExC、CryptoM
-allowed_channels = [1090678631489077331] if os.environ['ENVIRONMENT'] == 'development' else [1134007804244529212, 1133743935727091773, 1090678631489077333, 1114285942375718986, 1135457812982530068, 1140955884885917757, 1079634489317281812, 1126801372533243924, 1143119685957734470]
+allowed_channels = {}
+if os.environ['ENVIRONMENT'] == 'development':
+    allowed_channels = { 'CryptoJK': 1090678631489077331 }
+else:
+    allowed_channels = {
+        'AITuberゲーム部': 1134007804244529212,
+        'VTuberDAO': 1133743935727091773,
+        'CryptoJK音声': 1090678631489077333,
+        'AITuberゲーム部音声': 1114285942375718986,
+        'VTuberDAO音声': 1135457812982530068,
+        'AI画像（わど）': 1140955884885917757,
+        'Little Girl Warriors': 1079634489317281812,
+        'ExC': 1126801372533243924,
+        'CryptoM': 1143119685957734470
+    }
 # CryptoJK音声, AITuberゲーム部音声, VTuberDAO音声
 allowed_voice_channels = [1090678631489077333, 1114285942375718986, 1135457812982530068]
 join_channel_id = 1052887374239105032
@@ -50,24 +63,14 @@ class MyBot(commands.Bot):
                 if not self.get_command(command_name):
                     # コマンドが存在しない場合の処理
                     return
-            elif not message.content.startswith(command_prefix) and message.channel.id in allowed_channels:
+            elif not message.content.startswith(command_prefix) and message.channel.id in allowed_channels.values():
                 await response_message(self, message)
             elif message.channel.id == join_channel_id:
                 await response_join_message(self, message)
 
             await super().on_message(message)
         except Exception as e:
-            # ファイルからメッセージをロード
-            with open('services/scripts/error_messages', 'r') as f:
-                error_messages = json.load(f)
-
-            if e == 'You exceeded your current quota, please check your plan and billing details.':
-                print('API制限に達しました。')
-                await message.channel.send(random.choice(error_messages))
-            else:
-                # メッセージリストからランダムに選択
-                await message.channel.send(random.choice(error_messages))
-            print(f"Error: {e}")
+            await send_error_message(client, message, e)
 
     async def on_voice_state_update(self, member, before, after):
         if after.channel is not None and after.channel.id in allowed_voice_channels or before.channel is not None and before.channel.id in allowed_voice_channels:
