@@ -127,16 +127,16 @@ async def 切断(ctx):
 async def base(ctx):
     await response_message(ctx.bot, ctx.message, 'base')
 
-@client.command(name='oji', description="おじさん構文で返答します")
-async def oji(ctx):
-    await response_message(ctx.bot, ctx.message, 'oji')
+# @client.command(name='oji', description="おじさん構文で返答します")
+# async def oji(ctx):
+#     await response_message(ctx.bot, ctx.message, 'oji')
 
-@client.command(name='gal', description="ギャル構文で返答します")
-async def gal(ctx):
-    await response_message(ctx.bot, ctx.message, 'gal')
+# @client.command(name='gal', description="ギャル構文で返答します")
+# async def gal(ctx):
+#     await response_message(ctx.bot, ctx.message, 'gal')
 
-@client.command(name='mesugaki', description="メスガキ構文で返答します")
-async def mesugaki(ctx):
-    await response_message(ctx.bot, ctx.message, 'mesugaki')
+# @client.command(name='mesugaki', description="メスガキ構文で返答します")
+# async def mesugaki(ctx):
+#     await response_message(ctx.bot, ctx.message, 'mesugaki')
 
 client.run(discord_key)

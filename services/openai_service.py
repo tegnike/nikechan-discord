@@ -50,24 +50,27 @@ async def get_openai_response(history, model_name, type):
     response_message = response.content
 
     print("AI:", response_message)
+    # 会話履歴を更新
+    history.add_ai_message(response_message)
+    return response_message
 
-    if type != 'base':
-        messages = [SystemMessage(content="次の発言をAIが回答するような、丁寧な口調に戻してください。")] + [HumanMessage(content=(response_message))]
-        llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0)
-        response = llm(messages)
-        # 通常口調に戻してから会話履歴を更新
-        history.add_ai_message(response.content)
-        if type == 'gal':
-            messages2 = [SystemMessage(content=get_system_message(f"message_convert_galmoji.txt"))] + [HumanMessage(content=response.content)]
-            llm2 = ChatOpenAI(model_name=model_name, temperature=0)
-            response2 = llm2(messages2)
-            return response2.content
-        else:
-            return response_message
-    else:
-        # 会話履歴を更新
-        history.add_ai_message(response_message)
-        return response_message
+    # if type != 'base':
+    #     messages = [SystemMessage(content="次の発言をAIが回答するような、丁寧な口調に戻してください。")] + [HumanMessage(content=(response_message))]
+    #     llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0)
+    #     response = llm(messages)
+    #     # 通常口調に戻してから会話履歴を更新
+    #     history.add_ai_message(response.content)
+    #     if type == 'gal':
+    #         messages2 = [SystemMessage(content=get_system_message(f"message_convert_galmoji.txt"))] + [HumanMessage(content=response.content)]
+    #         llm2 = ChatOpenAI(model_name=model_name, temperature=0)
+    #         response2 = llm2(messages2)
+    #         return response2.content
+    #     else:
+    #         return response_message
+    # else:
+    #     # 会話履歴を更新
+    #     history.add_ai_message(response_message)
+    #     return response_message
 
 async def judge_if_i_response(history):
     # 過去5件のメッセージを取得
