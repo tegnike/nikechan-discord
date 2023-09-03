@@ -5,13 +5,35 @@ from langchain.schema import (
 from langchain.chat_models import ChatOpenAI
 from langchain.utilities import GoogleSearchAPIWrapper, SerpAPIWrapper
 from dotenv import load_dotenv
-import json
+import json, os, requests
 
 load_dotenv()
 
 def search_web(search_word):
-    search = SerpAPIWrapper() #GoogleSearchAPIWrapper()
-    return search.run(search_word)
+    try: 
+        url = 'https://preview.webpilotai.com/api/v1/watt'
+        headers = {
+            'Content-Type': 'application/json',
+            'Authorization': f"Bearer {os.environ['WEBPILOT_API_KEY']}"
+        }
+        data = {
+            "Content": f"「{search_word}」について調べてください。]"
+        }
+
+        response = requests.post(url, headers=headers, json=data)
+        print('WebPilotAPI search result:', response.text)
+        return response.text
+    except Exception as e:
+        print(f"Error: {e}")
+        try:
+            search = SerpAPIWrapper() #GoogleSearchAPIWrapper()
+            result = search.run(search_word)
+            print('SerpAPI search result:', result)
+            return result
+        except Exception as e2:
+            print(f"Error: {e2}")
+            return "情報を取得できませんでした。"
+
 
 functions = [
     # 何をする関数かについて記述
