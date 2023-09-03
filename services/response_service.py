@@ -1,7 +1,8 @@
+import json, random
 from datetime import datetime
 from pytz import timezone
 from langchain.memory import ChatMessageHistory
-from services.openai_service import get_openai_response, judge_if_i_response, get_join_response
+from services.openai_service import get_openai_response, judge_if_i_response
 from services.voicevox_service import play_voice
 from langchain.schema import (
     SystemMessage,
@@ -130,9 +131,13 @@ async def response_join_message(self, message):
             user_name = user.name
         print('User joined', ':', user_name)
 
-        response = await get_join_response(user_name)
+        # ファイルからメッセージをロード
+        with open('services/scripts/join_messages', 'r') as f:
+            join_messages = json.load(f)
+        join_message = random.choice(join_messages)
+
         # メッセージを送信
-        await message.channel.send(response)
+        await message.channel.send(join_message.replace("XXXXX", user_name))
 
         print('Join message completed.')
     else:
