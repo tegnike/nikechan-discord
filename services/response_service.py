@@ -1,4 +1,4 @@
-import json, random
+import json, random, re
 from datetime import datetime
 from pytz import timezone
 from services.openai_service import get_openai_response, judge_if_i_response
@@ -69,7 +69,6 @@ async def response_message(self, message, type=None):
     need_response = False
     if type != None:
         state["type"] = type
-        # bot宛のメンションであるかを確認
         need_response = True
         print("Switch type:", type)
     elif message.reference is not None:
@@ -86,9 +85,12 @@ async def response_message(self, message, type=None):
         # 会話歴から次に自分が回答すべきかを判定
         need_response = await judge_if_i_response(state["history"])
 
+    # メッセージ整形
+    message_content = re.sub(r'<@!?\d+>', '', message.content)
+
     # ユーザーメッセージを会話履歴に追加
-    state["history"].append({"role": "user", "content": auther_name + ": " + message.content})
-    print("User:", message.content)
+    state["history"].append({"role": "user", "content": auther_name + ": " + message_content})
+    print("User:", message_content)
 
     print("AI should response?:", need_response)
 
