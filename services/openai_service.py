@@ -1,10 +1,6 @@
-from langchain.chat_models import ChatOpenAI
-from langchain.schema import (
-    SystemMessage,
-    HumanMessage
-)
 from services.function_calling_service import ask_function_calling
 import json
+import openai
 
 def get_system_message(file_name):
     with open('services/system_messages/' + file_name, 'r') as file:
@@ -31,27 +27,31 @@ def get_response_system_message(type):
 
 async def get_openai_response(history, model_name, type):
     # 過去15件のメッセージを取得
-    latest_messages = history.messages[-15:]
+    latest_messages = history[-15:]
     print("latest_messages:", latest_messages)
 
     # functuion_calling
-    function_calling_result = await ask_function_calling(history.messages[-15:])
+    function_calling_result = await ask_function_calling(history[-15:])
     if function_calling_result != None:
         print("function calling: True")
         print("function calling result:", function_calling_result)
-        latest_messages.append(HumanMessage(content=("検索結果: " + function_calling_result)))
+        latest_messages.append({"role": "user", "content": "検索結果: " + function_calling_result})
     else:
         print("function calling: False")
 
     # OpenAIによる応答生成
-    messages = [SystemMessage(content=get_response_system_message(type))] + latest_messages
-    llm = ChatOpenAI(model_name=model_name, temperature=0, max_tokens=350)
-    response = llm(messages)
-    response_message = response.content
+    messages = [{"role": "system", "content": get_response_system_message(type)}] + latest_messages
+    response = openai.ChatCompletion.create(
+        model=model_name,
+        messages=messages,
+        temperature=0,
+        max_tokens=350
+    )
+    response_message = response["choices"][0]["message"]["content"]
 
     print("AI:", response_message)
     # 会話履歴を更新
-    history.add_ai_message(response_message)
+    history.append({"role": "assistant", "content": response_message})
     return response_message
 
     # if type != 'base':
@@ -77,15 +77,14 @@ async def judge_if_i_response(history):
     latest_messages = history.messages[-5:]
     past_messages = "You're name is 'ニケ'\n"
     for latest_message in latest_messages:
-        if isinstance(latest_message, HumanMessage):
+        if latest_message["role"] == "user":
             past_messages += latest_message.content + "\n"
         else:
             past_messages += "ニケ: " + latest_message.content + "\n"
 
     # OpenAIによる応答生成
-    messages = [SystemMessage(content=get_system_message("judge_if_i_response.txt"))] + [HumanMessage(content=past_messages)]
-    chat = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=1.0, max_tokens=2)
-    response = chat(messages)
+    messages = [{"role": "system", "content": get_system_message("judge_if_i_response.txt")}, {"role": "user", "content": past_messages}]
+    response = openai.ChatCompletion.create(model_name="gpt-3.5-turbo", messages=messages, temperature=1.0, max_tokens=2)
 
-    result = response.content.lower()
+    result = response["choices"][0]["message"]["content"].lower()
     return result == "true"

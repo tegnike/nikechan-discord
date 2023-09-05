@@ -1,14 +1,9 @@
 import json, random
 from datetime import datetime
 from pytz import timezone
-from langchain.memory import ChatMessageHistory
 from services.openai_service import get_openai_response, judge_if_i_response
 from services.voicevox_service import play_voice
 from services.moderation_service import check_moderation
-from langchain.schema import (
-    SystemMessage,
-    HumanMessage
-)
 
 master_id = 576031815945420812
 allowed_voice_channels = [1090678631489077333, 1114285942375718986, 1135457812982530068]
@@ -22,7 +17,7 @@ async def response_message(self, message, type=None):
     if state == None:
         state = {
             "server_id": server_id,
-            "history": ChatMessageHistory(),
+            "history": [],
             "count": 0,
             "current_date": datetime.now(timezone('Europe/Warsaw')).date(),
             "type": "base",
@@ -83,7 +78,7 @@ async def response_message(self, message, type=None):
         need_response = referenced_message.author == self.user
         # リプライに反応させるようにリプライメッセージを履歴に追加
         print("Referenced message:", referenced_message.content)
-        state["history"].add_ai_message(referenced_message.content)
+        state["history"].append({"role": "assistant", "content": referenced_message.content})
     elif self.user in message.mentions:
         # bot宛のメンションであるかを確認
         need_response = True
@@ -92,7 +87,7 @@ async def response_message(self, message, type=None):
         need_response = await judge_if_i_response(state["history"])
 
     # ユーザーメッセージを会話履歴に追加
-    state["history"].add_user_message(auther_name + ": " + message.content)
+    state["history"].append({"role": "user", "content": auther_name + ": " + message.content})
     print("User:", message.content)
 
     print("AI should response?:", need_response)
@@ -149,28 +144,10 @@ async def response_join_message(self, message):
 
 # MongoDBに保存する用にデータを変換
 def to_mongo(state):
-    messages = []
-    for message in state["history"].messages:
-        role = "user" if isinstance(message, HumanMessage) else "assistant"
-        messages.append({
-            "role": role,
-            "content": message.content
-        })
-    state["history"] = messages
-
     state["current_date"] = state["current_date"].strftime('%Y-%m-%d')
     state["last_message"] = state["last_message"].strftime('%Y-%m-%d %H:%M:%S')
 
 # MongoDBのデータをpythonで使用できるように変換
 def from_mongo(state):
-    history = ChatMessageHistory()
-    for message in state["history"]:
-        if message["role"] == "user":
-            history.add_user_message(message["content"])
-        else:
-            history.add_ai_message(message["content"])
-    state["history"] = history
-
-    # state["current_date"] = '2023-08-25'をdate型に変換
     state["current_date"] = datetime.strptime(state["current_date"], '%Y-%m-%d').date()
     state["last_message"] = datetime.strptime(state["last_message"], '%Y-%m-%d %H:%M:%S').astimezone(timezone('Europe/Warsaw'))
