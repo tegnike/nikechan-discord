@@ -88,8 +88,11 @@ async def response_message(self, message, type=None):
     # メッセージ整形
     message_content = re.sub(r'<@!?\d+>', '', message.content)
 
+    # 日本時間の現在時刻を'%Y/%m/%d %H:%M'形式で取得
+    now = datetime.now(timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M')
+
     # ユーザーメッセージを会話履歴に追加
-    state["history"].append({"role": "user", "content": auther_name + ": " + message_content})
+    state["history"].append({"role": "user", "content": f"{auther_name}({now}): {message_content}"})
     print("User:", message_content)
 
     print("AI should response?:", need_response)

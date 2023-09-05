@@ -1,5 +1,5 @@
 from services.function_calling_service import ask_function_calling
-import json
+import json, re
 import openai
 
 def get_system_message(file_name):
@@ -81,17 +81,18 @@ async def get_openai_response(history, model_name, type):
 
 async def judge_if_i_response(history):
     # 過去5件のメッセージを取得
-    latest_messages = history.messages[-5:]
+    latest_messages = history[-5:]
     past_messages = "You're name is 'ニケ'\n"
     for latest_message in latest_messages:
         if latest_message["role"] == "user":
-            past_messages += latest_message.content + "\n"
+            # latest_message["content"]から日付部分を削除する
+            past_messages += re.sub(r'\(\d{4}/\d{2}/\d{2} \d{2}:\d{2}\)', '', latest_message["content"]) + "\n"
         else:
-            past_messages += "ニケ: " + latest_message.content + "\n"
+            past_messages += "ニケ: " + latest_message["content"] + "\n"
 
     # OpenAIによる応答生成
     messages = [{"role": "system", "content": get_system_message("judge_if_i_response.txt")}, {"role": "user", "content": past_messages}]
-    response = openai.ChatCompletion.create(model_name="gpt-3.5-turbo", messages=messages, temperature=1.0, max_tokens=2)
+    response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=messages, temperature=1.0, max_tokens=2)
 
     result = response["choices"][0]["message"]["content"].lower()
     return result == "true"
