@@ -26,21 +26,17 @@ def get_response_system_message(type):
     return content
 
 async def get_openai_response(history, model_name, type):
-    # 過去15件のメッセージを取得
-    latest_messages = history[-15:]
-    print("latest_messages:", latest_messages)
-
     # functuion_calling
     function_calling_result = await ask_function_calling(history[-15:])
     if function_calling_result != None:
         print("function calling: True")
         print("function calling result:", function_calling_result)
-        latest_messages.append({"role": "user", "content": "検索結果: " + function_calling_result})
+        history.append({"role": "user", "content": "検索結果: " + function_calling_result})
     else:
         print("function calling: False")
 
     # OpenAIによる応答生成
-    messages = [{"role": "system", "content": get_response_system_message(type)}] + latest_messages
+    messages = [{"role": "system", "content": get_response_system_message(type)}] + history
     response = openai.ChatCompletion.create(
         model=model_name,
         messages=messages,

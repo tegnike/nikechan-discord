@@ -96,6 +96,10 @@ async def response_message(self, message, type=None):
 
     # 応答が必要な場合
     if need_response:
+        # 会話歴は常に15件に保つ
+        state["history"] = state["history"][-15:]
+        print("history:", state["history"])
+
         # OpenAIによる応答生成
         model_name = "gpt-4" if state["count"] <= 20 else "gpt-3.5-turbo"
         response = await get_openai_response(state["history"], model_name, state["type"])
