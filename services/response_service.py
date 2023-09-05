@@ -4,6 +4,7 @@ from pytz import timezone
 from langchain.memory import ChatMessageHistory
 from services.openai_service import get_openai_response, judge_if_i_response
 from services.voicevox_service import play_voice
+from services.moderation_service import check_moderation
 from langchain.schema import (
     SystemMessage,
     HumanMessage
@@ -47,6 +48,9 @@ async def response_message(self, message, type=None):
         if state["count"] == 100:
             await message.channel.send("[固定応答]設定上限に達したため、本日の応答は終了します。")
         print('Message limit.')
+        return
+    if await check_moderation(message):
+        print('Moderation True.')
         return
 
     # auther_nameを取得
