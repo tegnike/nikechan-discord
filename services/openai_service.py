@@ -35,20 +35,24 @@ async def get_openai_response(history, model_name, type):
     else:
         print("function calling: False")
 
-    # OpenAIによる応答生成
-    messages = [{"role": "system", "content": get_response_system_message(type)}] + history
-    response = openai.ChatCompletion.create(
-        model=model_name,
-        messages=messages,
-        temperature=0,
-        max_tokens=350
-    )
-    response_message = response["choices"][0]["message"]["content"]
+    while True:
+        # OpenAIによる応答生成
+        messages = [{"role": "system", "content": get_response_system_message(type)}] + history
+        response = openai.ChatCompletion.create(
+            model=model_name,
+            messages=messages,
+            temperature=0,
+            max_tokens=350
+        )
+        response_message = response["choices"][0]["message"]["content"]
 
-    print("AI:", response_message)
-    # 会話履歴を更新
-    history.append({"role": "assistant", "content": response_message})
-    return response_message
+        # 会話履歴を更新
+        history.append({"role": "assistant", "content": response_message})
+
+        # 応答が終了したかどうか判断
+        if response["choices"][0]["finish_reason"] == "stop":
+            print("AI:", response_message)
+            return response_message
 
     # if type != 'base':
     #     messages = [SystemMessage(content="次の発言をAIが回答するような、丁寧な口調に戻してください。")] + [HumanMessage(content=(response_message))]
