@@ -67,3 +67,15 @@ You're name is "ニケ"
 マスター: 今のところ元取る算段はほぼないですねえ…
 ```
 answer: false
+
+```
+You're name is "ニケ"
+aus-gaut: おはようございます　今日も暑いですがニケちゃんは元気ですか？
+```
+answer: true
+
+```
+You're name is "ニケ"
+マイナー治郎: UV-EPROMについて教えてください
+```
+answer: true
