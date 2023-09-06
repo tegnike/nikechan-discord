@@ -13,7 +13,7 @@ async def response_message(self, message, type=None):
     server_id = message.guild.id
 
     # サーバーIDから状態を取得、なければ初期化
-    state = self.mongo_collection.find_one({"server_id": server_id})
+    state = self.collection_states.find_one({"server_id": server_id})
     if state == None:
         state = {
             "server_id": server_id,
@@ -26,7 +26,7 @@ async def response_message(self, message, type=None):
             "is_monthly_limit": False,
         }
         to_mongo(state)
-        self.mongo_collection.insert_one(state)
+        self.collection_states.insert_one(state)
     from_mongo(state)
 
     # 日付が変わったらカウントをリセット
@@ -121,12 +121,18 @@ async def response_message(self, message, type=None):
 
         state["count"] += 1
         print('Message send completed.')
+
+        self.collection_chats.insert_one({
+            "server_id": server_id,
+            "user": message_content,
+            "assistant": response
+        })
     else:
         print('Message was not sent.')
 
     # 状態を更新
     to_mongo(state)
-    self.mongo_collection.update_one({"server_id": server_id}, {"$set": state})
+    self.collection_states.update_one({"server_id": server_id}, {"$set": state})
 
 async def response_join_message(self, message):
     if message.mentions:

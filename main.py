@@ -48,7 +48,8 @@ class MyBot(commands.Bot):
         # nikechan_botという名前のデータベースを取得（なかったら勝手に作成）
         db = client.nikechan_bot
         # データベースのstatesコレクションを取得（なかったら勝手に作成、コレクション=RDBMSのテーブル）
-        self.mongo_collection = db.states
+        self.collection_states = db.states
+        self.collection_chats = db.chats
 
     async def on_ready(self):
         print('Bot is ready.')
