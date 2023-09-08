@@ -36,9 +36,12 @@ async def get_openai_response(history, model_name, type):
         print("function calling: False")
 
     while True:
+        retry_count = 0
+        response_result = ''
         try:
             # OpenAIによる応答生成
             messages = [{"role": "system", "content": get_response_system_message(type)}] + history
+            model_name = "gpt-3.5-turbo" if retry_count > 0 else model_name
             response = openai.ChatCompletion.create(
                 model=model_name,
                 messages=messages,
@@ -50,10 +53,13 @@ async def get_openai_response(history, model_name, type):
             # 会話履歴を更新
             history.append({"role": "assistant", "content": response_message})
 
+            response_result =+ response_message
+            retry_count = retry_count + 1
+
             # 応答が終了したかどうか判断
-            if response["choices"][0]["finish_reason"] == "stop":
-                print("AI:", response_message)
-                return response_message
+            if response["choices"][0]["finish_reason"] == "stop" or retry_count > 5:
+                print("AI:", response_result)
+                return response_result
         except Exception as e:
             # トークン超過の場合はhistoryを短くして再トライ
             if "This model's maximum context length" in str(e):
