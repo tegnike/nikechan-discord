@@ -35,12 +35,12 @@ async def response_message(self, message, type=None):
         state["count"] = 0
         state["current_date"] = new_date
 
-    # 自分のメッセージは無視 または 100件以上のメッセージは無視
+    # 自分のメッセージは無視 または 50件以上のメッセージは無視
     if message.author == self.user:
         print('Message received from self, ignoring.')
         return
-    if state["count"] > 100:
-        if state["count"] == 100:
+    if state["count"] > 50:
+        if state["count"] == 50:
             await message.channel.send("[固定応答]設定上限に達したため、本日の応答は終了します。")
         print('Message limit.')
         return
@@ -104,12 +104,13 @@ async def response_message(self, message, type=None):
         print("history:", state["history"])
 
         # OpenAIによる応答生成
-        model_name = "gpt-4" if state["count"] <= 20 else "gpt-3.5-turbo"
-        response = await get_openai_response(state["history"], model_name, state["type"])
-        # 音声メッセージ
-        if message.channel.id in allowed_voice_channels:
-            print("Play Voice:", response)
-            await play_voice(message, response)
+        model_name = "gpt-3.5-turbo"
+        # model_name = "gpt-4" if state["count"] <= 20 else "gpt-3.5-turbo"
+        response = await send_openai_response(message, state["history"], model_name, state["type"])
+        # # 音声メッセージ
+        # if message.channel.id in allowed_voice_channels:
+        #     print("Play Voice:", response)
+        #     await play_voice(message, response)
 
         # メッセージを送信
         await message.channel.send(response)
