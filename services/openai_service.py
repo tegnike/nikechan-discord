@@ -53,7 +53,7 @@ async def get_openai_response(history, model_name, type):
             # 会話履歴を更新
             history.append({"role": "assistant", "content": response_message})
 
-            response_result =+ response_message
+            response_result = response_result + response_message
             retry_count = retry_count + 1
 
             # 応答が終了したかどうか判断
