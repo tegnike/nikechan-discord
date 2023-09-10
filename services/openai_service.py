@@ -85,7 +85,19 @@ async def get_openai_response(history, model_name, type):
     #     history.add_ai_message(response_message)
     #     return response_message
 
-async def judge_if_i_response(history):
+async def judge_if_i_response(message, history):
+    # URLのみ/添付のみ/スタンプのみ/botかどうかをチェック
+    url_regex = r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
+    if re.search(url_regex, message.content): # URLチェック
+        return False
+    if len(message.attachments) > 0 and message.content == '': # 添付チェック
+        print('添付のみ')
+        return False
+    if len(message.stickers) > 0: # スタンプチェック
+        return False
+    if message.author.bot: # botチェック
+        return False
+
     # 過去5件のメッセージを取得
     latest_messages = history[-5:]
     past_messages = "You're name is 'ニケ'\n"

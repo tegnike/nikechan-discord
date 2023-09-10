@@ -83,7 +83,7 @@ async def response_message(self, message, type=None):
         need_response = True
     else:
         # 会話歴から次に自分が回答すべきかを判定
-        need_response = await judge_if_i_response(state["history"])
+        need_response = await judge_if_i_response(message, state["history"])
 
     # メッセージ整形
     message_content = re.sub(r'<@!?\d+>', '', message.content)
