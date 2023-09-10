@@ -106,7 +106,7 @@ async def response_message(self, message, type=None):
         # OpenAIによる応答生成
         model_name = "gpt-3.5-turbo"
         # model_name = "gpt-4" if state["count"] <= 20 else "gpt-3.5-turbo"
-        response = await get_openai_response(message, state["history"], model_name, state["type"])
+        response = await get_openai_response(state["history"], model_name, state["type"])
         # # 音声メッセージ
         # if message.channel.id in allowed_voice_channels:
         #     print("Play Voice:", response)
