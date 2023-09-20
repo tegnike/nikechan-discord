@@ -35,12 +35,14 @@ async def get_openai_response(history, model_name, type):
     else:
         print("function calling: False")
 
+    retry_count = 0
+    response_result = ''
     while True:
-        retry_count = 0
-        response_result = ''
         try:
             # OpenAIによる応答生成
             messages = [{"role": "system", "content": get_response_system_message(type)}] + history
+            if retry_count > 0:
+                messages = messages + [{"role": "user", "content": "途中で切れているようなので、続きから回答短めでお願いします。"}]
             model_name = "gpt-3.5-turbo" if retry_count > 0 else model_name
             response = openai.ChatCompletion.create(
                 model=model_name,
