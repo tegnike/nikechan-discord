@@ -29,38 +29,38 @@ async def send_openai_response(message, history, model_name, type):
                 )
                 response_message = response["choices"][0]["message"]["content"]
 
-            if retry_count == 0:
-                # 知らないときの応答
-                if_i_dont_know_result = await check_if_i_dont_know(history + [{"role": "assistant", "content": response_message}])
-                if not if_i_dont_know_result["if_i_know"]:
-                    i_dont_know_message = select_random_message('i_dont_know_messages')
-                    # メッセージリストからランダムに選択
-                    print("AI:", i_dont_know_message)
-                    history.append({"role": "assistant", "content": i_dont_know_message})
-                    await message.channel.send(i_dont_know_message)
+            # if retry_count == 0:
+            #     # 知らないときの応答
+            #     if_i_dont_know_result = await check_if_i_dont_know(history + [{"role": "assistant", "content": response_message}])
+            #     if not if_i_dont_know_result["if_i_know"]:
+            #         i_dont_know_message = select_random_message('i_dont_know_messages')
+            #         # メッセージリストからランダムに選択
+            #         print("AI:", i_dont_know_message)
+            #         history.append({"role": "assistant", "content": i_dont_know_message})
+            #         await message.channel.send(i_dont_know_message)
 
-                    try:
-                        web_search_result = await web_search_detail(if_i_dont_know_result)
-                        # 会話履歴を更新
-                        history.append({"role": "user", "content": f"検索結果: {web_search_result}"})
-                        # OpenAIによる応答生成
-                        messages = [{"role": "system", "content": get_response_system_message(type)}] + history
-                        model_name = "gpt-3.5-turbo"
-                        response = openai.ChatCompletion.create(
-                            model=model_name,
-                            messages=messages,
-                            temperature=0,
-                            max_tokens=350
-                        )
-                        response_message = response["choices"][0]["message"]["content"]
-                    except Exception as e:
-                        print(f"web_search_detail: Error: {e}")
-                        finally_couldnt_find_message = select_random_message('finally_couldnt_find_messages')
-                        # やっぱりわからなかったときのメッセージをリストからランダムに選択
-                        print("AI:", finally_couldnt_find_message)
-                        history.append({"role": "assistant", "content": finally_couldnt_find_message})
-                        await message.channel.send(finally_couldnt_find_message)
-                        return finally_couldnt_find_message
+            #         try:
+            #             web_search_result = await web_search_detail(if_i_dont_know_result)
+            #             # 会話履歴を更新
+            #             history.append({"role": "user", "content": f"検索結果: {web_search_result}"})
+            #             # OpenAIによる応答生成
+            #             messages = [{"role": "system", "content": get_response_system_message(type)}] + history
+            #             model_name = "gpt-3.5-turbo"
+            #             response = openai.ChatCompletion.create(
+            #                 model=model_name,
+            #                 messages=messages,
+            #                 temperature=0,
+            #                 max_tokens=350
+            #             )
+            #             response_message = response["choices"][0]["message"]["content"]
+            #         except Exception as e:
+            #             print(f"web_search_detail: Error: {e}")
+            #             finally_couldnt_find_message = select_random_message('finally_couldnt_find_messages')
+            #             # やっぱりわからなかったときのメッセージをリストからランダムに選択
+            #             print("AI:", finally_couldnt_find_message)
+            #             history.append({"role": "assistant", "content": finally_couldnt_find_message})
+            #             await message.channel.send(finally_couldnt_find_message)
+            #             return finally_couldnt_find_message
 
             # 会話履歴を更新
             history.append({"role": "assistant", "content": response_message})
