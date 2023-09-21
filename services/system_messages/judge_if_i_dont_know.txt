@@ -1,14 +1,14 @@
 #次の入力文はユーザーとあなたによる1往復の会話です。
 #この入力文から、あなたがユーザーのコメントに対して知っている情報を返却したかどうかを判断し、以下のFormatの形式で返してください。
 #知らなかった場合は、どんな情報が必要かをOptionから選択してください。
-#Optionに適切な選択肢がない場合はtext_includeはFalseにしてください。
+#Optionに適切な選択肢がない場合はif_i_knowはtrueにしてください。
 #Optionにadditional_infoの指定がある場合は、指示に従ってレスポンスに含めてください。
 
 Format:
 [
 "if_i_know":Boolean(null:false, Default(True))
-"next_action":String(null:false if text_include = False)
-"additional_info":String(null:false if text_include = False)
+"next_action":String(null:false if if_i_know = False)
+"additional_info":String(null:false if if_i_know = False)
 ]
 
 Option:
