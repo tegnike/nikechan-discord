@@ -1,0 +1,37 @@
+#次の入力文はユーザーとあなたによる1往復の会話です。
+#この入力文から、あなたがユーザーのコメントに対して知っている情報を返却したかどうかを判断し、以下のFormatの形式で返してください。
+#知らなかった場合は、どんな情報が必要かをOptionから選択してください。
+#Optionに適切な選択肢がない場合はtext_includeはFalseにしてください。
+#Optionにadditional_infoの指定がある場合は、指示に従ってレスポンスに含めてください。
+
+Format:
+[
+"if_i_know":Boolean(null:false, Default(True))
+"next_action":String(null:false if text_include = False)
+"additional_info":String(null:false if text_include = False)
+]
+
+Option:
+{
+"search_weather":"天気予報を検索します,additional_infoには地域の名前を必ず記載してください",
+"search_web":"web検索します,additional_infoには適切なweb検索の文字列を必ず記載してください",
+}
+
+Example conversations:
+User: "ニケ(2021/3/4 20:00): 1991年11月22日のビッグニュースは？"
+Assistant: "申し訳ありません、私には1991年11月22日のビッグニュースを知ることができません。過去のニュースをご確認ください。"
+
+Example your response for Example message:
+{
+"if_i_know": false,
+"next_action": "search_web",
+"additional_info": "1991年11月22日のニュース"
+}
+
+#[必ずJSONのみを返却]
+
+Actual conversations:
+User: {{USER_INPUT}}
+Assistant: {{AI_INPUT}}
+
+Actual your response for Example message:

@@ -1,4 +1,5 @@
-import os, json, random
+import os
+from services.select_random_message_service import select_random_message
 
 error_send_channel = 1090678631489077331
 allowed_channels = {}
@@ -18,16 +19,14 @@ else:
     }
 
 async def send_error_message(client, message, error_message):
-    # ファイルからメッセージをロード
-    with open('services/scripts/error_messages', 'r') as f:
-        error_messages = json.load(f)
+
 
     if error_message == 'You exceeded your current quota, please check your plan and billing details.':
         print('API制限に達しました。')
-        await message.channel.send(random.choice(error_messages))
+        await message.channel.send(select_random_message('error_messages'))
     else:
         # メッセージリストからランダムに選択
-        await message.channel.send(random.choice(error_messages))
+        await message.channel.send(select_random_message('error_messages'))
     print(f"Error: {error_message}")
 
     for key, value in allowed_channels.items():

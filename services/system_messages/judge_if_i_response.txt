@@ -2,7 +2,7 @@
 #From the given conversation, answer with 'ture' or 'false' whether you should speak after the last message.
 #If someone ask to check some information, mostly they want your answer. Means you should return 'true'.
 
-#Example
+#Example conversationa
 ```
 [
   {
@@ -95,4 +95,7 @@
 ]
 ```
 
-以下context
+#Actual conversation
+conversations: {{conversations}}
+
+return:

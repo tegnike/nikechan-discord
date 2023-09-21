@@ -1,40 +1,10 @@
-from services.function_calling_service import ask_function_calling
-import json, re
+from services.my_function_calling_service import check_if_i_dont_know, web_search_detail
+from services.system_message_service import get_system_message, get_response_system_message
+from services.select_random_message_service import select_random_message
+import re
 import openai
 
-def get_system_message(file_name):
-    with open('services/system_messages/' + file_name, 'r') as file:
-        return file.read().strip()
-
-def get_response_system_message(type):
-    # 置換文字列が書かれたJSONファイルを読み込む
-    with open(f'services/system_messages/system_{type}.json', 'r', encoding='utf-8') as file:
-        replacement_dict = json.load(file)
-
-    # 元の文章のtxtファイルを読み込む
-    with open('services/system_messages/response_message.txt', 'r', encoding='utf-8') as file:
-        content = file.read()
-
-    # 文章の中の特定の英字を探す & その英字を先ほどの辞書に基づいて置換する
-    for original, replacement in replacement_dict.items():
-        if original == "{{EXAMPLES}}":
-            replacement = json.dumps(replacement, ensure_ascii=False, indent=2)
-        if original == "{{NOTE}}":
-            replacement = ' '.join(replacement)
-        content = content.replace(original, replacement)
-
-    return content
-
-async def get_openai_response(history, model_name, type):
-    # functuion_calling
-    function_calling_result = await ask_function_calling(history[-15:])
-    if function_calling_result != None:
-        print("function calling: True")
-        print("function calling result:", function_calling_result)
-        history.append({"role": "user", "content": "検索結果: " + function_calling_result})
-    else:
-        print("function calling: False")
-
+async def send_openai_response(message, history, model_name, type):
     retry_count = 0
     response_result = ''
     while True:
@@ -43,14 +13,54 @@ async def get_openai_response(history, model_name, type):
             messages = [{"role": "system", "content": get_response_system_message(type)}] + history
             if retry_count > 0:
                 messages = messages + [{"role": "user", "content": "途中で切れているようなので、続きから回答短めでお願いします。"}]
-            model_name = "gpt-3.5-turbo" if retry_count > 0 else model_name
-            response = openai.ChatCompletion.create(
-                model=model_name,
-                messages=messages,
-                temperature=0,
-                max_tokens=350
-            )
-            response_message = response["choices"][0]["message"]["content"]
+                response = openai.Completion.create(
+                    model="gpt-3.5-turbo-instruct",
+                    prompt="途中で切れているようなので、続きから回答短めでお願いします。" + "\n\n" + history[-1]["content"],
+                    max_tokens=350,
+                    temperature=1.0,
+                )
+                response_message = response["choices"][0]["text"]
+            else:
+                response = openai.ChatCompletion.create(
+                    model=model_name,
+                    messages=messages,
+                    temperature=0,
+                    max_tokens=350
+                )
+                response_message = response["choices"][0]["message"]["content"]
+
+            if retry_count == 0:
+                # 知らないときの応答
+                if_i_dont_know_result = await check_if_i_dont_know(history + [{"role": "assistant", "content": response_message}])
+                if not if_i_dont_know_result["if_i_know"]:
+                    i_dont_know_message = select_random_message('i_dont_know_messages')
+                    # メッセージリストからランダムに選択
+                    print("AI:", i_dont_know_message)
+                    history.append({"role": "assistant", "content": i_dont_know_message})
+                    await message.channel.send(i_dont_know_message)
+
+                    try:
+                        web_search_result = await web_search_detail(if_i_dont_know_result)
+                        # 会話履歴を更新
+                        history.append({"role": "user", "content": f"検索結果: {web_search_result}"})
+                        # OpenAIによる応答生成
+                        messages = [{"role": "system", "content": get_response_system_message(type)}] + history
+                        model_name = "gpt-3.5-turbo"
+                        response = openai.ChatCompletion.create(
+                            model=model_name,
+                            messages=messages,
+                            temperature=0,
+                            max_tokens=350
+                        )
+                        response_message = response["choices"][0]["message"]["content"]
+                    except Exception as e:
+                        print(f"web_search_detail: Error: {e}")
+                        finally_couldnt_find_message = select_random_message('finally_couldnt_find_messages')
+                        # やっぱりわからなかったときのメッセージをリストからランダムに選択
+                        print("AI:", finally_couldnt_find_message)
+                        history.append({"role": "assistant", "content": finally_couldnt_find_message})
+                        await message.channel.send(finally_couldnt_find_message)
+                        return finally_couldnt_find_message
 
             # 会話履歴を更新
             history.append({"role": "assistant", "content": response_message})
@@ -59,8 +69,10 @@ async def get_openai_response(history, model_name, type):
             retry_count = retry_count + 1
 
             # 応答が終了したかどうか判断
-            if response["choices"][0]["finish_reason"] == "stop" or retry_count > 5:
+            if response["choices"][0]["finish_reason"] == "stop" or retry_count > 3:
                 print("AI:", response_result)
+                # メッセージを送信
+                await message.channel.send(response_result)
                 return response_result
         except Exception as e:
             # トークン超過の場合はhistoryを短くして再トライ
@@ -111,8 +123,9 @@ async def judge_if_i_response(message, history):
             past_messages += "ニケ: " + latest_message["content"] + "\n"
 
     # OpenAIによる応答生成
-    messages = [{"role": "system", "content": get_system_message("judge_if_i_response.txt")}, {"role": "user", "content": past_messages}]
-    response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=messages, temperature=1.0, max_tokens=2)
+    prompt = get_system_message("judge_if_i_response.txt").replace("{{conversations}}", past_messages)
+    response = openai.Completion.create(model="gpt-3.5-turbo-instruct", prompt=prompt, temperature=1.0, max_tokens=2)
 
-    result = response["choices"][0]["message"]["content"].lower()
-    return result == "true"
+    result = response["choices"][0]["text"].lower()
+    print("judge_if_i_response: result:", result.replace(" ", ""))
+    return result.replace(" ", "") == "true"

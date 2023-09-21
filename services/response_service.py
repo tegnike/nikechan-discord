@@ -1,9 +1,10 @@
-import json, random, re
+import re
 from datetime import datetime
 from pytz import timezone
-from services.openai_service import get_openai_response, judge_if_i_response
+from services.openai_service import send_openai_response, judge_if_i_response
 from services.voicevox_service import play_voice
 from services.moderation_service import check_moderation
+from services.select_random_message_service import select_random_message
 
 master_id = 576031815945420812
 allowed_voice_channels = [1090678631489077333, 1114285942375718986, 1135457812982530068]
@@ -106,19 +107,17 @@ async def response_message(self, message, type=None):
         # OpenAIによる応答生成
         model_name = "gpt-3.5-turbo"
         # model_name = "gpt-4" if state["count"] <= 20 else "gpt-3.5-turbo"
-        response = await get_openai_response(state["history"], model_name, state["type"])
+        response = await send_openai_response(message, state["history"], model_name, state["type"])
         # # 音声メッセージ
         # if message.channel.id in allowed_voice_channels:
         #     print("Play Voice:", response)
         #     await play_voice(message, response)
 
-        # メッセージを送信
-        await message.channel.send(response)
         state["last_message"] = datetime.now(timezone('Europe/Warsaw'))
 
-        if state["count"] == 20:
-            # 20件目のメッセージを送信したら、モデルをGPT-3.5に切り替える
-            await message.channel.send("[固定応答]設定上限に達したため、モデルをGPT-4からGPT-3.5に切り替えます。")
+        # if state["count"] == 20:
+        #     # 20件目のメッセージを送信したら、モデルをGPT-3.5に切り替える
+        #     await message.channel.send("[固定応答]設定上限に達したため、モデルをGPT-4からGPT-3.5に切り替えます。")
 
         state["count"] += 1
         print('Message send completed.')
@@ -146,13 +145,8 @@ async def response_join_message(self, message):
             user_name = user.name
         print('User joined', ':', user_name)
 
-        # ファイルからメッセージをロード
-        with open('services/scripts/join_messages', 'r') as f:
-            join_messages = json.load(f)
-        join_message = random.choice(join_messages)
-
         # メッセージを送信
-        await message.channel.send(join_message.replace("XXXXX", user_name))
+        await message.channel.send(select_random_message('join_messages').replace("XXXXX", user_name))
 
         print('Join message completed.')
     else:

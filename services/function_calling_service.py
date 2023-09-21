@@ -1,3 +1,5 @@
+# 使っていません
+
 from langchain.utilities import GoogleSearchAPIWrapper, SerpAPIWrapper
 from dotenv import load_dotenv
 import openai
