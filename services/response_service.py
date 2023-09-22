@@ -40,8 +40,8 @@ async def response_message(self, message, type=None):
     if message.author == self.user:
         print('Message received from self, ignoring.')
         return
-    if state["count"] > 50:
-        if state["count"] == 50:
+    if state["count"] >= 100:
+        if state["count"] == 100:
             await message.channel.send("[固定応答]設定上限に達したため、本日の応答は終了します。")
         print('Message limit.')
         return
