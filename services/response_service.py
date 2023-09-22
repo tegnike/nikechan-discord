@@ -34,7 +34,7 @@ async def response_message(self, message, type=None):
     new_date = datetime.now(timezone('Europe/Warsaw')).date()
     if new_date > state["current_date"]:
         state["count"] = 0
-        state["current_date"] = new_date
+        state["current_date"] = new_date 
 
     # 自分のメッセージは無視 または 50件以上のメッセージは無視
     if message.author == self.user:
