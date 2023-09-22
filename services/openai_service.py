@@ -1,13 +1,17 @@
 from services.my_function_calling_service import check_if_i_dont_know, web_search_detail
 from services.system_message_service import get_system_message, get_response_system_message
 from services.select_random_message_service import select_random_message
-import re
+import re, asyncio, random
 import openai
 
 async def send_openai_response(message, history, model_name, type):
+    MAX_RETRIES = 5
+    BACKOFF_FACTOR = 0.1
+    JITTER_FACTOR = 0.02
     retry_count = 0
     response_result = ''
-    while True:
+    
+    while retry_count < MAX_RETRIES:
         try:
             # OpenAIによる応答生成
             messages = [{"role": "system", "content": get_response_system_message(type)}] + history
@@ -74,10 +78,14 @@ async def send_openai_response(message, history, model_name, type):
                 # メッセージを送信
                 await message.channel.send(response_result)
                 return response_result
+
+            retry_count += 1
+
         except Exception as e:
             # トークン超過の場合はhistoryを短くして再トライ
             if "This model's maximum context length" in str(e):
                 history = history[2:]
+                await asyncio.sleep(BACKOFF_FACTOR * (2 ** retry_count) + random.uniform(0,JITTER_FACTOR))
             else:
                 raise e
 
