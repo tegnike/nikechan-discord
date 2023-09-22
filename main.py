@@ -58,6 +58,9 @@ class MyBot(commands.Bot):
         await self.change_presence(activity=discord.Game(name=status_message))
 
     async def on_message(self, message):
+        if message.author == self.user:
+            print('Message received from self, ignoring.')
+            return
         try:
             if message.content.startswith(command_prefix):
                 command_name = message.content[len(command_prefix):].split(' ', 1)[0]
@@ -71,8 +74,8 @@ class MyBot(commands.Bot):
 
             await super().on_message(message)
         except Exception as e:
-            print(e)
-            # await send_error_message(client, message, e)
+            print("Error:", e)
+            await send_error_message(client, message, e)
 
     async def on_voice_state_update(self, member, before, after):
         if after.channel is not None and after.channel.id in allowed_voice_channels or before.channel is not None and before.channel.id in allowed_voice_channels:

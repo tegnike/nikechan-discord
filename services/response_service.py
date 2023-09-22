@@ -36,10 +36,7 @@ async def response_message(self, message, type=None):
         state["count"] = 0
         state["current_date"] = new_date 
 
-    # 自分のメッセージは無視 または 50件以上のメッセージは無視
-    if message.author == self.user:
-        print('Message received from self, ignoring.')
-        return
+    # 100件以上のメッセージは無視
     if state["count"] >= 100:
         if state["count"] == 100:
             await message.channel.send("[固定応答]設定上限に達したため、本日の応答は終了します。")

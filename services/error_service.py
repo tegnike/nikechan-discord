@@ -19,15 +19,13 @@ else:
     }
 
 async def send_error_message(client, message, error_message):
-
-
     if error_message == 'You exceeded your current quota, please check your plan and billing details.':
         print('API制限に達しました。')
         await message.channel.send(select_random_message('error_messages'))
     else:
         # メッセージリストからランダムに選択
         await message.channel.send(select_random_message('error_messages'))
-    print(f"Error: {error_message}")
+    print("Error:", error_message)
 
     for key, value in allowed_channels.items():
          if message.channel.id == value:
