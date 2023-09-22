@@ -135,5 +135,4 @@ async def judge_if_i_response(message, history):
     response = openai.Completion.create(model="gpt-3.5-turbo-instruct", prompt=prompt, temperature=1.0, max_tokens=2)
 
     result = response["choices"][0]["text"].lower()
-    print("judge_if_i_response: result:", result.replace(" ", ""))
     return result.replace(" ", "") == "true"
