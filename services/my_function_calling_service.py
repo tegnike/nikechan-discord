@@ -57,12 +57,17 @@ async def check_if_i_dont_know(history):
 
 async def web_search_detail(first_result):
     print("web_search_detail: start")
-    if not first_result["if_i_know"] and first_result["next_action"] != '':
-        if first_result["next_action"] == "search_web":
-            search_result = await search_web(first_result["additional_info"])
+    if not first_result["if_i_know"]:
+        search_result = await search_web(first_result["search_word"])
 
-            print("web_search_detail: end")
-            return search_result
+        print("web_search_detail: end")
+        return search_result
+    # if not first_result["if_i_know"] and first_result["next_action"] != '':
+    #     if first_result["next_action"] == "search_web":
+    #         search_result = await search_web(first_result["additional_info"])
+
+    #         print("web_search_detail: end")
+    #         return search_result
     else:
         print("web_search_detail: end")
         raise Exception("invalid first_result")

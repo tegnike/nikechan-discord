@@ -1,20 +1,12 @@
 #次の入力文はユーザーとあなたによる1往復の会話です。
 #この入力文から、あなたがユーザーのコメントに対して知っている情報を返却したかどうかを判断し、以下のFormatの形式で返してください。
-#知らなかった場合は、どんな情報が必要かをOptionから選択してください。
-#Optionに適切な選択肢がない場合はif_i_knowはtrueにしてください。
-#Optionにadditional_infoの指定がある場合は、指示に従ってレスポンスに含めてください。
+#知らなかった場合は、どんな情報が必要かをsearch_wordに入力してください。
 
 Format:
 {
 "if_i_know":Boolean(null:false, Default(True))
-"next_action":String(null:false if if_i_know = False)
-"additional_info":String(null:false if if_i_know = False)
+"search_word":String(null:false if if_i_know = False)
 }
-
-Option:
-[
-"search_web":"web検索します,additional_infoには適切なweb検索の文字列を必ず記載してください",
-]
 
 Example conversations:
 User: "ニケ(2021/3/4 20:00): 1991年11月22日のビッグニュースは？"
@@ -23,8 +15,7 @@ Assistant: "申し訳ありません、私には1991年11月22日のビッグニ
 Example your response for Example message:
 {
 "if_i_know": false,
-"next_action": "search_web",
-"additional_info": "1991年11月22日のニュース"
+"search_word": "1991年11月22日のニュース"
 }
 
 #[必ずJSONのみを返却]
