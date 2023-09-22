@@ -58,22 +58,21 @@ class MyBot(commands.Bot):
         await self.change_presence(activity=discord.Game(name=status_message))
 
     async def on_message(self, message):
-        await super().on_message(message)
-        pass
-        # try:
-        #     if message.content.startswith(command_prefix):
-        #         command_name = message.content[len(command_prefix):].split(' ', 1)[0]
-        #         if not self.get_command(command_name):
-        #             # コマンドが存在しない場合の処理
-        #             return
-        #     elif not message.content.startswith(command_prefix) and message.channel.id in allowed_channels.values():
-        #         await response_message(self, message)
-        #     elif message.channel.id == join_channel_id:
-        #         await response_join_message(self, message)
+        try:
+            if message.content.startswith(command_prefix):
+                command_name = message.content[len(command_prefix):].split(' ', 1)[0]
+                if not self.get_command(command_name):
+                    # コマンドが存在しない場合の処理
+                    return
+            elif not message.content.startswith(command_prefix) and message.channel.id in allowed_channels.values():
+                await response_message(self, message)
+            elif message.channel.id == join_channel_id:
+                await response_join_message(self, message)
 
-        #     await super().on_message(message)
-        # except Exception as e:
-        #     await send_error_message(client, message, e)
+            await super().on_message(message)
+        except Exception as e:
+            print(e)
+            # await send_error_message(client, message, e)
 
     async def on_voice_state_update(self, member, before, after):
         if after.channel is not None and after.channel.id in allowed_voice_channels or before.channel is not None and before.channel.id in allowed_voice_channels:
