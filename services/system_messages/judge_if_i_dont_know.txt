@@ -5,17 +5,16 @@
 #Optionにadditional_infoの指定がある場合は、指示に従ってレスポンスに含めてください。
 
 Format:
-[
+{
 "if_i_know":Boolean(null:false, Default(True))
 "next_action":String(null:false if if_i_know = False)
 "additional_info":String(null:false if if_i_know = False)
-]
+}
 
 Option:
-{
-"search_weather":"天気予報を検索します,additional_infoには地域の名前を必ず記載してください",
+[
 "search_web":"web検索します,additional_infoには適切なweb検索の文字列を必ず記載してください",
-}
+]
 
 Example conversations:
 User: "ニケ(2021/3/4 20:00): 1991年11月22日のビッグニュースは？"
