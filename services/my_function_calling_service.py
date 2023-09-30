@@ -53,7 +53,7 @@ async def check_if_i_dont_know(history):
         return response_json
     except Exception as e:
         print(f"check_if_i_dont_know: Error: {e}")
-        raise Exception("check_if_i_dont_know: Error")
+        raise Exception(f"check_if_i_dont_know: {e}")
 
 async def web_search_detail(first_result):
     print("web_search_detail: start")

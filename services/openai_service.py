@@ -16,10 +16,9 @@ async def send_openai_response(message, history, model_name, type):
             # OpenAIによる応答生成
             messages = [{"role": "system", "content": get_response_system_message(type)}] + history
             if retry_count > 0:
-                messages = messages + [{"role": "user", "content": "途中で切れているようなので、続きから回答短めでお願いします。"}]
                 response = openai.Completion.create(
                     model="gpt-3.5-turbo-instruct",
-                    prompt="途中で切れているようなので、続きから回答短めでお願いします。" + "\n\n" + history[-1]["content"],
+                    prompt="途中で切れているようなので、続きから回答してください。回答は100字以内でお願いします。" + "\n\n" + history[-1]["content"],
                     max_tokens=350,
                     temperature=1.0,
                 )
@@ -35,8 +34,8 @@ async def send_openai_response(message, history, model_name, type):
 
             if retry_count == 0:
                 # 知らないときの応答
-                if_i_dont_know_result = await check_if_i_dont_know(history + [{"role": "assistant", "content": response_message}])
-                if not if_i_dont_know_result["if_i_know"]:
+                # if_i_dont_know_result = await check_if_i_dont_know(history + [{"role": "assistant", "content": response_message}])
+                if False: #not if_i_dont_know_result["if_i_know"]:
                     i_dont_know_message = select_random_message('i_dont_know_messages')
                     # メッセージリストからランダムに選択
                     print("AI:", i_dont_know_message)
