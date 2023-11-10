@@ -1,10 +1,10 @@
-import openai
 import os, json, random
-
-openai.api_key = os.environ['OPENAI_API_KEY']
+from openai import OpenAI
 
 async def check_moderation(message):
-    response = openai.Moderation.create(
+    client = OpenAI()
+
+    response = client.moderations.create(
         input = message.content
     )
 

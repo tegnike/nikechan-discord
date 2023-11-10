@@ -1,119 +1,129 @@
-from services.my_function_calling_service import check_if_i_dont_know, web_search_detail
-from services.system_message_service import get_system_message, get_response_system_message
-from services.select_random_message_service import select_random_message
-import re, asyncio, random
-import openai
+import re
+import time
+from openai import OpenAI
+from services.function_calling_service import search_web, describe_image, create_image
+from services.system_message_service import get_system_message
+from services.attachment_service import get_attachment_data
 
-async def send_openai_response(message, history, model_name, type):
-    MAX_RETRIES = 5
-    BACKOFF_FACTOR = 0.1
-    JITTER_FACTOR = 0.02
-    retry_count = 0
-    response_result = ''
-    
-    while retry_count < MAX_RETRIES:
-        try:
-            # OpenAIによる応答生成
-            messages = [{"role": "system", "content": get_response_system_message(type)}] + history
-            if retry_count > 0:
-                response = openai.Completion.create(
-                    model="gpt-3.5-turbo-instruct",
-                    prompt="途中で切れているようなので、続きから回答してください。回答は100字以内でお願いします。" + "\n\n" + history[-1]["content"],
-                    max_tokens=350,
-                    temperature=1.0,
+client = OpenAI()
+
+async def send_openai_response(message, messages_for_history, model_name, thread_id):
+    assistant_id = 'asst_Dyf8M2h6lPdojCmouzgDbc7t'
+
+    images = {}
+    image_name = ""
+    file_ids = []
+    if message.attachments:
+        for attachment in message.attachments:
+            if re.search(r'\.(png|jpeg|jpg|gif|webp)$', attachment.filename):
+                if image_name != "":
+                    continue
+                images[attachment.filename] = await get_attachment_data(attachment)
+                image_name = attachment.filename
+                print("Temporary image saved:", attachment.filename)
+            elif re.search(r'\.(c|cpp|csv|docx|html|java|json|md|pdf|php|pptx|py|py|rb|tex|txt)$', attachment.filename):
+                file = client.files.create(
+                    file=open(attachment.filename, "rb"),
+                    purpose='assistants'
                 )
-                response_message = response["choices"][0]["text"]
+                file_ids.push(file.id)
+                print("file uploaded:", file.id)
+
+    for index, message_for_history in enumerate(messages_for_history):
+        # index がmessages_for_historyの長さ-1のときは、最後のメッセージなので、画像を添付する
+        if index == len(messages_for_history) - 1:
+            if images == {}:
+                content = message_for_history
             else:
-                response = openai.ChatCompletion.create(
-                    model=model_name,
-                    messages=messages,
-                    temperature=0,
-                    max_tokens=350
+                content = f"{message_for_history}\n次の画像が添付されています。{image_name}\nIf user wants to generate an image from an image, please use describe_image function first, then create_image function."
+        else:
+            content = message_for_history
+
+        client.beta.threads.messages.create(
+            thread_id=thread_id,
+            role="user",
+            content=content,
+            file_ids=file_ids
+        )
+
+    try:
+        run = client.beta.threads.runs.create(
+            thread_id=thread_id,
+            assistant_id=assistant_id
+        )
+
+        while True:
+            run = client.beta.threads.runs.retrieve(
+                thread_id=thread_id,
+                run_id=run.id
+            )
+            print(run.status)
+            if run.status == "completed":
+                break
+            elif run.status == "requires_action":
+                tool_outputs = []
+                for index, tool_call in enumerate(run.required_action.submit_tool_outputs.tool_calls):
+                    function_name = tool_call.function.name
+                    print(f"function_name[{index}]: {function_name}")
+                    call_id = tool_call.id
+                    if function_name == "describe_image":
+                        res = await describe_image(tool_call, images)
+
+                    elif function_name == "create_image":
+                        res = await create_image(message, tool_call)
+
+                    elif function_name == "search_web":
+                        res = await search_web(tool_call)
+
+                    tool_outputs.append({
+                        "tool_call_id": call_id,
+                        "output": res,
+                    })
+
+                run = client.beta.threads.runs.submit_tool_outputs(
+                    thread_id=thread_id,
+                    run_id=run.id,
+                    tool_outputs=tool_outputs
                 )
-                response_message = response["choices"][0]["message"]["content"]
+            time.sleep(1)
 
-            if retry_count == 0:
-                # 知らないときの応答
-                # if_i_dont_know_result = await check_if_i_dont_know(history + [{"role": "assistant", "content": response_message}])
-                if False: #not if_i_dont_know_result["if_i_know"]:
-                    i_dont_know_message = select_random_message('i_dont_know_messages')
-                    # メッセージリストからランダムに選択
-                    print("AI:", i_dont_know_message)
-                    history.append({"role": "assistant", "content": i_dont_know_message})
-                    await message.channel.send(i_dont_know_message)
+        messages = client.beta.threads.messages.list(
+            thread_id=thread_id
+        )
 
-                    try:
-                        web_search_result = await web_search_detail(if_i_dont_know_result)
-                        # 会話履歴を更新
-                        history.append({"role": "user", "content": f"検索結果: {web_search_result}"})
-                        # OpenAIによる応答生成
-                        messages = [{"role": "system", "content": get_response_system_message(type)}] + history
-                        model_name = "gpt-3.5-turbo"
-                        response = openai.ChatCompletion.create(
-                            model=model_name,
-                            messages=messages,
-                            temperature=0,
-                            max_tokens=350
-                        )
-                        response_message = response["choices"][0]["message"]["content"]
-                    except Exception as e:
-                        print(f"web_search_detail: Error: {e}")
-                        finally_couldnt_find_message = select_random_message('finally_couldnt_find_messages')
-                        # やっぱりわからなかったときのメッセージをリストからランダムに選択
-                        print("AI:", finally_couldnt_find_message)
-                        history.append({"role": "assistant", "content": finally_couldnt_find_message})
-                        await message.channel.send(finally_couldnt_find_message)
-                        return finally_couldnt_find_message
-
-            # 会話履歴を更新
-            history.append({"role": "assistant", "content": response_message})
-
-            response_result = response_result + response_message
-            retry_count = retry_count + 1
-
-            # 応答が終了したかどうか判断
-            if response["choices"][0]["finish_reason"] == "stop" or retry_count > 3:
-                print("AI:", response_result)
-                # メッセージを送信
-                await message.channel.send(response_result)
-                return response_result
-
-            retry_count += 1
-
-        except Exception as e:
-            # トークン超過の場合はhistoryを短くして再トライ
-            if "This model's maximum context length" in str(e):
-                history = history[2:]
-                await asyncio.sleep(BACKOFF_FACTOR * (2 ** retry_count) + random.uniform(0,JITTER_FACTOR))
-            else:
-                raise e
-
-    # if type != 'base':
-    #     messages = [SystemMessage(content="次の発言をAIが回答するような、丁寧な口調に戻してください。")] + [HumanMessage(content=(response_message))]
-    #     llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0)
-    #     response = llm(messages)
-    #     # 通常口調に戻してから会話履歴を更新
-    #     history.add_ai_message(response.content)
-    #     if type == 'gal':
-    #         messages2 = [SystemMessage(content=get_system_message(f"message_convert_galmoji.txt"))] + [HumanMessage(content=response.content)]
-    #         llm2 = ChatOpenAI(model_name=model_name, temperature=0)
-    #         response2 = llm2(messages2)
-    #         return response2.content
-    #     else:
-    #         return response_message
-    # else:
-    #     # 会話履歴を更新
-    #     history.add_ai_message(response_message)
-    #     return response_message
+        # メッセージを送信
+        response_message = messages.data[0].content[0].text.value
+        await message.channel.send(f"[{len(messages.data)}] {response_message}")
+        return response_message
+    except Exception as e:
+        cancel_run = client.beta.threads.runs.cancel(
+            thread_id=thread_id,
+            run_id=run.id
+        )
+        while True:
+            run = client.beta.threads.runs.retrieve(
+                thread_id=thread_id,
+                run_id=cancel_run.id
+            )
+            print(run.status)
+            if run.status == "cancelled":
+                break
+            time.sleep(1)
+        raise e
 
 async def judge_if_i_response(message, history):
     # URLのみ/添付のみ/スタンプのみ/botかどうかをチェック
     url_regex = r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
     if re.search(url_regex, message.content): # URLチェック
         return False
-    if len(message.attachments) > 0 and message.content == '': # 添付チェック
-        print('添付のみ')
-        return False
+    for attachment in message.attachments: # ファイルサイズチェック
+        if attachment.size > 512000000:
+            return False
+    if len(message.attachments) > 0: # 添付チェック
+        if message.content == '':
+            return False
+        else:
+            return True
     if len(message.stickers) > 0: # スタンプチェック
         return False
     if message.author.bot: # botチェック
@@ -131,7 +141,7 @@ async def judge_if_i_response(message, history):
 
     # OpenAIによる応答生成
     prompt = get_system_message("judge_if_i_response.txt").replace("{{conversations}}", past_messages)
-    response = openai.Completion.create(model="gpt-3.5-turbo-instruct", prompt=prompt, temperature=1.0, max_tokens=2)
-
-    result = response["choices"][0]["text"].lower()
+    response = client.completions.create(model="gpt-3.5-turbo-instruct", prompt=prompt)
+    print("judge_if_i_response: response:", response.choices[0].text)
+    result = response.choices[0].text.lower()
     return result.replace(" ", "") == "true"

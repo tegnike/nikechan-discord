@@ -1,14 +1,22 @@
 # 使っていません
 
-from langchain.utilities import GoogleSearchAPIWrapper, SerpAPIWrapper
+import json
+import os
+import io
+import aiohttp
+import discord
 from dotenv import load_dotenv
-import openai
-import json, os, requests
+from openai import OpenAI
+from langchain.utilities import GoogleSearchAPIWrapper, SerpAPIWrapper
+from services.attachment_service import encode_attachment
 
 load_dotenv()
+client = OpenAI()
 
-def search_web(search_word):
-    try: 
+async def search_web(tool_call):
+    try:
+        search_word = json.loads(tool_call.function.arguments)['search_word']
+
         url = 'https://preview.webpilotai.com/api/v1/watt'
         headers = {
             'Content-Type': 'application/json',
@@ -18,84 +26,67 @@ def search_web(search_word):
             "Content": f"「{search_word}」について調べ、日本語で回答してください。」"
         }
 
-        response = requests.post(url, headers=headers, json=data)
-        print('WebPilotAPI search result:', response.text)
-        return response.text
+        async with aiohttp.ClientSession() as session:
+            async with session.post(url, headers=headers, json=data) as response:
+                response_text = await response.text()
+                print('WebPilotAPI search result:', json.loads(response_text)["content"])
+                return response_text
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"WebPilotAPI Error: {e}")
         try:
             search = SerpAPIWrapper() #GoogleSearchAPIWrapper()
-            result = search.run(search_word)
+            result = await search.arun(search_word)
             print('SerpAPI search result:', result)
             return result
         except Exception as e2:
-            print(f"Error: {e2}")
-            return "情報を取得できませんでした。"
+            print(f"SerpAPI Error: {e2}")
+        return "情報を取得できませんでした。"
 
-functions = [
-    # 何をする関数かについて記述
-    {
-        "name": "search_web",
-        "description": "インターネットから情報を検索する",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "search_word": {
-                    "type": "string",
-                    "description": "検索したい情報を入力。例: 東京 明日 天気",
-                },
-            },
-            "required": ["search_word"],
-        },
-    }
-]
+async def describe_image(tool_call, images):
+    try:
+        image_name = json.loads(tool_call.function.arguments)['image_name']
+        user_question = json.loads(tool_call.function.arguments)['user_question']
 
-async def ask_function_calling(history):
-    print("function_calling start")
-    MAX_REQUEST_COUNT = 5
-    # ユーザーの入力をmessagesに格納
-    messages = [{"role": "system", "content": "必要に応じ、与えられた情報を元に回答してください。情報を見つけられなかったという回答は許されません"}] + history
+        data = await encode_attachment(images[image_name])
+        image_url = f"data:image/jpeg;base64, {data}"
 
-    for request_count in range(MAX_REQUEST_COUNT):
-        print("request_count:", request_count)
-
-        function_call_mode = "auto"
-        if request_count == MAX_REQUEST_COUNT - 1:
-            function_call_mode = "none"
-
-        # ユーザーの入力内容から、Functions Callingが必要かどうか判断する
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo-0613",
-            messages=messages,
-            functions=functions,
-            function_call=function_call_mode,  # auto is default, but we'll be explicit
+        response = client.chat.completions.create(
+            model="gpt-4-vision-preview",
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": user_question},
+                        {
+                            "type": "image_url",
+                            "image_url": image_url,
+                        },
+                    ],
+                }
+            ],
+            max_tokens=300,
         )
-        message = response["choices"][0]["message"]
+        print("image_description:", response.choices[0].message.content)
+        return response.choices[0].message.content
+    except Exception as e:
+        return "画像説明を生成できませんでした。"
 
-        # Functions Callingが必要な場合は、additional_kwargsに関数名と引数を格納されている
-        if message.get("function_call"):
-            # messageから実行する関数と引数を取得
-            function_name = message["function_call"]["name"]
-            arguments = json.loads(message["function_call"]["arguments"])
+async def create_image(message, tool_call):
+    try:
+        image_prompt = json.loads(tool_call.function.arguments)['image_prompt']
 
-            # 関数を実行
-            function_response = search_web(
-                search_word=(arguments.get("search_word")),
-            )
-            print("search word:", arguments.get("search_word"))
-            print("search result:", function_response)
+        response = client.images.generate(
+            model="dall-e-3",
+            prompt=image_prompt,
+            n=1,
+            size="1024x1024"
+        )
 
-            # 実行結果をFunctionMessageとしてmessagesに追加
-            messages.append({
-                "role": "function",
-                "name": function_name,
-                "content": function_response,
-            })
-
-            if len(messages) > 15:
-                messages.pop(0)
-        else:
-            if request_count == 0:
-                return None
-            else:
-                return message["content"]
+        url = response.data[0].url
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as response:
+                data = await response.read()
+        await message.channel.send(file=discord.File(fp=io.BytesIO(data), filename='image.png'))
+        return "画像を生成が完了し、すでに別の方法でユーザーに共有済みです。"
+    except Exception as e:
+        return f"画像生成に失敗しました。"

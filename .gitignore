@@ -4,3 +4,5 @@ __pycache__/
 myenv/
 .vscode/
 ._**
+/tmp_files/*
+!/tmp_files/.keep
