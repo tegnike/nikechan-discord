@@ -58,7 +58,8 @@ async def send_openai_response(message, messages_for_history, model_name, thread
                 run_id=run.id
             )
             print(run.status)
-            if run.status == "completed":
+            # completed, expired, failed, cancelled の場合
+            if run.status in ["completed", "expired", "failed", "cancelled"]:
                 break
             elif run.status == "requires_action":
                 tool_outputs = []
