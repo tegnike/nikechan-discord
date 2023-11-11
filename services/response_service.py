@@ -42,6 +42,7 @@ async def response_message(self, message):
     if state["count"] >= 100:
         if state["count"] == 100:
             await message.channel.send("[固定応答]設定上限に達したため、本日の応答は終了します。")
+            state["count"] = 101
         print('Message limit.')
         return
     if await check_moderation(message):
@@ -93,9 +94,9 @@ async def response_message(self, message):
         model_name = "gpt-4" if state["count"] <= 20 else "gpt-3.5-turbo"
         response = await send_openai_response(message, state["messages_for_history"], model_name, state["thread_id"])
 
-        if state["count"] == 20:
-            # 20件目のメッセージを送信したら、モデルをGPT-3.5に切り替える
-            await message.channel.send("[固定応答]設定上限に達したため、モデルをGPT-4からGPT-3.5に切り替えます。")
+        # if state["count"] == 20:
+        #     # 20件目のメッセージを送信したら、モデルをGPT-3.5に切り替える
+        #     await message.channel.send("[固定応答]設定上限に達したため、モデルをGPT-4からGPT-3.5に切り替えます。")
 
         state["count"] += 1
         print('Message send completed.')

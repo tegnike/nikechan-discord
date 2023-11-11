@@ -56,7 +56,7 @@ async def describe_image(tool_call, images):
                 {
                     "role": "user",
                     "content": [
-                        {"type": "text", "text": user_question},
+                        {"type": "text", "text": f"{user_question}\nPlease answer in English."},
                         {
                             "type": "image_url",
                             "image_url": image_url,

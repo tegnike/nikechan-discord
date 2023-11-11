@@ -8,7 +8,8 @@ from services.attachment_service import get_attachment_data
 client = OpenAI()
 
 async def send_openai_response(message, messages_for_history, model_name, thread_id):
-    assistant_id = 'asst_Dyf8M2h6lPdojCmouzgDbc7t'
+    ASSISTANT_ID = 'asst_Dyf8M2h6lPdojCmouzgDbc7t'
+    END_ACTIONS = ["completed", "expired", "failed", "cancelled"]
 
     images = {}
     image_name = ""
@@ -39,31 +40,44 @@ async def send_openai_response(message, messages_for_history, model_name, thread
         else:
             content = message_for_history
 
-        client.beta.threads.messages.create(
-            thread_id=thread_id,
-            role="user",
-            content=content,
-            file_ids=file_ids
-        )
+        retry_count = 0
+        while retry_count < 5:
+            try:
+                client.beta.threads.messages.create(
+                    thread_id=thread_id,
+                    role="user",
+                    content=content,
+                    file_ids=file_ids
+                )
+                break
+            except Exception as e:
+                if re.search("Can't add messages to thread_.* while a run .* is active.", str(e)):
+                    time.sleep(2)
+                    retry_count += 1
+                    continue
+                else:
+                    raise e
+        if retry_count >= 10:
+            return "Couldn't add messages to thread while a run is active."
 
     try:
-        run = client.beta.threads.runs.create(
+        create_run = client.beta.threads.runs.create(
             thread_id=thread_id,
-            assistant_id=assistant_id
+            assistant_id=ASSISTANT_ID
         )
 
         while True:
-            run = client.beta.threads.runs.retrieve(
+            retrieve_run = client.beta.threads.runs.retrieve(
                 thread_id=thread_id,
-                run_id=run.id
+                run_id=create_run.id
             )
-            print(run.status)
+            print(retrieve_run.status)
             # completed, expired, failed, cancelled の場合
-            if run.status in ["completed", "expired", "failed", "cancelled"]:
+            if retrieve_run.status in END_ACTIONS:
                 break
-            elif run.status == "requires_action":
+            elif retrieve_run.status == "requires_action":
                 tool_outputs = []
-                for index, tool_call in enumerate(run.required_action.submit_tool_outputs.tool_calls):
+                for index, tool_call in enumerate(retrieve_run.required_action.submit_tool_outputs.tool_calls):
                     function_name = tool_call.function.name
                     print(f"function_name[{index}]: {function_name}")
                     call_id = tool_call.id
@@ -81,9 +95,9 @@ async def send_openai_response(message, messages_for_history, model_name, thread
                         "output": res,
                     })
 
-                run = client.beta.threads.runs.submit_tool_outputs(
+                client.beta.threads.runs.submit_tool_outputs(
                     thread_id=thread_id,
-                    run_id=run.id,
+                    run_id=create_run.id,
                     tool_outputs=tool_outputs
                 )
             time.sleep(1)
@@ -99,15 +113,15 @@ async def send_openai_response(message, messages_for_history, model_name, thread
     except Exception as e:
         cancel_run = client.beta.threads.runs.cancel(
             thread_id=thread_id,
-            run_id=run.id
+            run_id=create_run.id
         )
         while True:
-            run = client.beta.threads.runs.retrieve(
+            retrieve_run = client.beta.threads.runs.retrieve(
                 thread_id=thread_id,
                 run_id=cancel_run.id
             )
-            print(run.status)
-            if run.status == "cancelled":
+            print(retrieve_run.status)
+            if retrieve_run.status in END_ACTIONS:
                 break
             time.sleep(1)
         raise e
