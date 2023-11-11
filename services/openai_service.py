@@ -93,7 +93,7 @@ async def send_openai_response(message, messages_for_history, model_name, thread
 
         # メッセージを送信
         response_message = messages.data[0].content[0].text.value
-        await message.channel.send(f"[{len(messages.data)}] {response_message}")
+        await message.channel.send(response_message)
         return response_message
     except Exception as e:
         cancel_run = client.beta.threads.runs.cancel(

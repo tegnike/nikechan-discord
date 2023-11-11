@@ -72,8 +72,8 @@ async def response_message(self, message):
         need_response = referenced_message.author == self.user
         # リプライに反応させるようにリプライメッセージを履歴に追加
         print("Referenced message:", referenced_message.content)
-        message.content = f"{auther_name}({now}): {referenced_message.content}"
-        state["history"].append({"role": "assistant", "content": referenced_message.content})
+        referenced_message_content = f"{auther_name}({now}): {referenced_message.content}"
+        message_content = f"AIであるあなたの発言: {referenced_message_content}\n{message_content}"
     elif self.user in message.mentions:
         # bot宛のメンションであるかを確認
         need_response = True
