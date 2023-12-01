@@ -94,6 +94,7 @@ async def response_message(self, message):
         model_name = "gpt-4" if state["count"] <= 20 else "gpt-3.5-turbo"
         response, thread_id = await send_openai_response(message, state["messages_for_history"], model_name, state["thread_id"])
 
+        state["messages_for_judge"].append({"role": "assistant", "content": response})
         state["thread_id"] = thread_id
 
         # if state["count"] == 20:
