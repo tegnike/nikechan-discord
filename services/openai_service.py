@@ -12,9 +12,8 @@ async def send_openai_response(message, messages_for_history, model_name, thread
     END_ACTIONS = ["completed", "expired", "failed", "cancelled"]
 
     thread_messages = client.beta.threads.messages.list(thread_id)
-    # thread_messages.dataが　２０より大きい場合はスレッドを変更する
-    print("thread_messages.data:", thread_messages.data)
-    if len(thread_messages.data) > 20:
+    # thread_messages.dataが　19より大きい場合はスレッドを変更する
+    if len(thread_messages.data) > 19:
         new_thread = client.beta.threads.create()
         thread_id = new_thread.id
         print("Thread changed.")
