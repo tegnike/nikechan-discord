@@ -11,6 +11,14 @@ async def send_openai_response(message, messages_for_history, model_name, thread
     ASSISTANT_ID = 'asst_Dyf8M2h6lPdojCmouzgDbc7t'
     END_ACTIONS = ["completed", "expired", "failed", "cancelled"]
 
+    thread_messages = client.beta.threads.messages.list(thread_id)
+    # thread_messages.dataが　２０より大きい場合はスレッドを変更する
+    print("thread_messages.data:", thread_messages.data)
+    if len(thread_messages.data) > 20:
+        new_thread = client.beta.threads.create()
+        thread_id = new_thread.id
+        print("Thread changed.")
+
     images = {}
     image_name = ""
     file_ids = []
@@ -58,7 +66,7 @@ async def send_openai_response(message, messages_for_history, model_name, thread
                 else:
                     raise e
         if retry_count >= 10:
-            return "Couldn't add messages to thread while a run is active."
+            return "Couldn't add messages to thread while a run is active.", thread_id
 
     try:
         create_run = client.beta.threads.runs.create(
@@ -109,7 +117,7 @@ async def send_openai_response(message, messages_for_history, model_name, thread
         # メッセージを送信
         response_message = messages.data[0].content[0].text.value
         await message.channel.send(response_message)
-        return response_message
+        return response_message, thread_id
     except Exception as e:
         cancel_run = client.beta.threads.runs.cancel(
             thread_id=thread_id,

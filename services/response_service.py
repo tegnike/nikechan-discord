@@ -92,7 +92,9 @@ async def response_message(self, message):
         # OpenAIによる応答生成
         model_name = "gpt-3.5-turbo"
         model_name = "gpt-4" if state["count"] <= 20 else "gpt-3.5-turbo"
-        response = await send_openai_response(message, state["messages_for_history"], model_name, state["thread_id"])
+        response, thread_id = await send_openai_response(message, state["messages_for_history"], model_name, state["thread_id"])
+
+        state["thread_id"] = thread_id
 
         # if state["count"] == 20:
         #     # 20件目のメッセージを送信したら、モデルをGPT-3.5に切り替える
