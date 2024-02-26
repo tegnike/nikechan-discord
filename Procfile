@@ -1,2 +1,2 @@
 worker: python main.py
-worker: python call_youtube.py
+clock: python call_youtube.py
