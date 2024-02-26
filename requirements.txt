@@ -9,3 +9,4 @@ pymongo
 dnspython
 hupper
 aiohttp
+google-api-python-client
