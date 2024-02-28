@@ -122,21 +122,21 @@ async def response_message(self, message):
 
 async def response_join_message(self, message):
     if message.mentions:
-        user = message.mentions[0]
-        # user_nameを取得
-        user_name = ''
-        if user.nick:
-            user_name = user.nick
+        user_id = message.mentions[0].id  # メンションされたユーザーのIDを取得
+        member = message.guild.get_member(user_id)  # IDからサーバー内のMemberオブジェクトを取得
+        if member:
+            # user_nameを取得
+            user_name = member.nick if member.nick else member.name
+            print('User joined', ':', user_name)
+
+            # メッセージを送信
+            await message.channel.send(select_random_message('join_messages').replace("XXXXX", user_name))
+
+            print('Join message completed.')
         else:
-            user_name = user.name
-        print('User joined', ':', user_name)
-
-        # メッセージを送信
-        await message.channel.send(select_random_message('join_messages').replace("XXXXX", user_name))
-
-        print('Join message completed.')
+            print('Member not found.')
     else:
-        print('Nobady joined.')
+        print('Nobody joined.')
 
 # MongoDBに保存する用にデータを変換
 def to_mongo(state):
