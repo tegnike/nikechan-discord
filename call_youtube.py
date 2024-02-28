@@ -56,7 +56,7 @@ def get_latest_videos():
     if os.environ['ENVIRONMENT'] == 'development':
         client = MongoClient('localhost', 27018, username='root', password='password')
     else:
-        client = MongoClient(os.environ['MONGO_URI'])  # 環境変数からMongoDBのURIを取得
+        client = MongoClient('mongodb+srv://user:uxwl6GjFSXPkNvZJ@cluster0.njarmyw.mongodb.net/?retryWrites=true&w=majority')
 
     db = client.nikechan_bot
     collection = db.youtube_videos
