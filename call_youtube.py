@@ -5,6 +5,7 @@ import pytz
 from googleapiclient.discovery import build
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
+from pymongo import MongoClient
 
 load_dotenv()
 
@@ -46,12 +47,19 @@ TEXT_LIST = [
 def get_latest_videos():
     youtube = build('youtube', 'v3', developerKey=API_KEY)
     now = datetime.now(pytz.UTC)
-    # 分を10分単位で切り捨てるために、現在の分に対して10で割ってから切り捨て、再び10を掛ける
     truncated_minutes = (now.minute // 10) * 10
-    # 切り捨てた分を設定し、さらに11分前を求める
     start_time = now.replace(minute=truncated_minutes, second=0, microsecond=0) - timedelta(minutes=200)
-    # start_time = now - timedelta(hours=24)
     messages = []
+
+    # MongoDBに接続
+    client = None
+    if os.environ['ENVIRONMENT'] == 'development':
+        client = MongoClient('localhost', 27018, username='root', password='password')
+    else:
+        client = MongoClient(os.environ['MONGO_URI'])  # 環境変数からMongoDBのURIを取得
+
+    db = client.nikechan_bot
+    collection = db.youtube_videos
 
     for channel_name, channel_id in CHANNEL_IDS.items():
         response = youtube.search().list(
@@ -63,24 +71,21 @@ def get_latest_videos():
             publishedAfter=start_time.isoformat()
         ).execute()
 
+        if not response.get('items'):
+            continue
+
         for item in response.get('items', []):
             video_id = item['id']['videoId']
 
-            # call_youtube.txtから動画IDを取得し、重複している場合はスキップ
-            # 重複していない場合は、動画IDをcall_youtube.txtに追加
-            with open('./call_youtube.txt', 'r') as f:
-                video_ids = f.read().splitlines()
-                if video_id in video_ids:
-                    continue
-                video_ids.append(video_id)
-            with open('./call_youtube.txt', 'w') as f:
-                print(f"Write {video_id}")
-                f.write('\n'.join(video_ids))
+            # MongoDBのコレクションを使用して動画IDの重複をチェック
+            if collection.find_one({'video_id': video_id}):
+                continue  # 既に存在する場合はスキップ
+            else:
+                # 新しい動画IDをコレクションに追加
+                collection.insert_one({'video_id': video_id})
 
             title = item['snippet']['title']
-            # published_at = item['snippet']['publishedAt']
             video_url = f'https://www.youtube.com/watch?v={video_id}'
-            # TEXT_LISTからランダムにメッセージを取得
             message = random.choice(TEXT_LIST).replace('CHARACTER_NAME', channel_name)
             message = f'{message}\n『{title}』\n{video_url}'
             messages.append(message)
