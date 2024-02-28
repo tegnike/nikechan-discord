@@ -49,7 +49,7 @@ def get_latest_videos():
     # 分を10分単位で切り捨てるために、現在の分に対して10で割ってから切り捨て、再び10を掛ける
     truncated_minutes = (now.minute // 10) * 10
     # 切り捨てた分を設定し、さらに11分前を求める
-    start_time = now.replace(minute=truncated_minutes, second=0, microsecond=0) - timedelta(minutes=21)
+    start_time = now.replace(minute=truncated_minutes, second=0, microsecond=0) - timedelta(minutes=200)
     # start_time = now - timedelta(hours=24)
     messages = []
 
@@ -68,12 +68,13 @@ def get_latest_videos():
 
             # call_youtube.txtから動画IDを取得し、重複している場合はスキップ
             # 重複していない場合は、動画IDをcall_youtube.txtに追加
-            with open('call_youtube.txt', 'r') as f:
+            with open('./call_youtube.txt', 'r') as f:
                 video_ids = f.read().splitlines()
                 if video_id in video_ids:
                     continue
                 video_ids.append(video_id)
-            with open('call_youtube.txt', 'w') as f:
+            with open('./call_youtube.txt', 'w') as f:
+                print(f"Write {video_id}")
                 f.write('\n'.join(video_ids))
 
             title = item['snippet']['title']
