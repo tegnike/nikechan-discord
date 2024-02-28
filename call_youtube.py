@@ -49,8 +49,8 @@ def get_latest_videos():
     # 分を10分単位で切り捨てるために、現在の分に対して10で割ってから切り捨て、再び10を掛ける
     truncated_minutes = (now.minute // 10) * 10
     # 切り捨てた分を設定し、さらに11分前を求める
-    # start_time = now.replace(minute=truncated_minutes, second=0, microsecond=0) - timedelta(minutes=21)
-    start_time = now - timedelta(hours=24)
+    start_time = now.replace(minute=truncated_minutes, second=0, microsecond=0) - timedelta(minutes=21)
+    # start_time = now - timedelta(hours=24)
     messages = []
 
     for channel_name, channel_id in CHANNEL_IDS.items():
