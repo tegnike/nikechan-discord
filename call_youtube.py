@@ -48,8 +48,8 @@ def get_latest_videos():
     now = datetime.now(pytz.UTC)
     # 分を10分単位で切り捨てるために、現在の分に対して10で割ってから切り捨て、再び10を掛ける
     truncated_minutes = (now.minute // 10) * 10
-    # 切り捨てた分を設定し、さらに10分前を求める前に3分を加算
-    start_time = now.replace(minute=truncated_minutes + 3, second=0, microsecond=0) - timedelta(minutes=10)
+    # 切り捨てた分を設定し、さらに11分前を求める
+    start_time = now.replace(minute=truncated_minutes, second=0, microsecond=0) - timedelta(minutes=11)
     # start_time = now - timedelta(hours=10)
     messages = []
 
@@ -65,6 +65,17 @@ def get_latest_videos():
 
         for item in response.get('items', []):
             video_id = item['id']['videoId']
+
+            # call_youtube.txtから動画IDを取得し、重複している場合はスキップ
+            # 重複していない場合は、動画IDをcall_youtube.txtに追加
+            with open('call_youtube.txt', 'r') as f:
+                video_ids = f.read().splitlines()
+                if video_id in video_ids:
+                    continue
+                video_ids.append(video_id)
+            with open('call_youtube.txt', 'w') as f:
+                f.write('\n'.join(video_ids))
+
             title = item['snippet']['title']
             # published_at = item['snippet']['publishedAt']
             video_url = f'https://www.youtube.com/watch?v={video_id}'
