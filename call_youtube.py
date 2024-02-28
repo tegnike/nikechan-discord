@@ -10,7 +10,7 @@ from pymongo import MongoClient
 load_dotenv()
 
 TOKEN = os.environ['DISCORD_KEY']
-CHANNEL_ID = 1090678631489077331
+CHANNEL_ID = 1133743935727091773
 API_KEY = os.environ['GOOGLE_API_KEY']
 CHANNEL_IDS = {'スイちゃん': 'UCl5shU0C8jjo81SB-V4jEtA', 'ここママ': 'UCkICVOSNH4AXjJnQ6dNeehA'}
 
@@ -43,6 +43,7 @@ TEXT_LIST = [
   "速報です！CHARACTER_NAMEの新しいYouTube動画が公開されました！一緒に視聴しましょう！",
   "お知らせです！CHARACTER_NAMEの新たな動画がYouTubeでお目見えしました！今すぐチェックしてみてくださいね！",
 ]
+
 
 def get_latest_videos():
     youtube = build('youtube', 'v3', developerKey=API_KEY)
@@ -92,6 +93,7 @@ def get_latest_videos():
 
     return messages
 
+
 async def send_messages():
     channel = client.get_channel(CHANNEL_ID)
     print(channel)
@@ -101,6 +103,7 @@ async def send_messages():
             print(message)
             await channel.send(message)
     await client.close()
+
 
 @client.event
 async def on_ready():
