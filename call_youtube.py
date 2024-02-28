@@ -25,7 +25,7 @@ TEXT_LIST = [
   "🌟お知らせ🌟 CHARACTER_NAMEの最新YouTube動画が公開されました！今回の内容は必見です！みんな、急いでチェックしてね！",
   "📢速報！ CHARACTER_NAMEより素敵な新動画がYouTubeに届けられました！一緒に視聴しましょう！",
   "🎉新作動画アラート🎉 CHARACTER_NAMEのYouTubeチャンネルに新しい動画がアップされました！リンクをクリックして、魅力的な世界へ飛び込みましょう！",
-  "みんな、待望のニュースだよ！CHARACTER_NAMEのYouTubeチャンネルに新動画がアップされました。今回のテーマはとっても興味深いですよ！",
+  "みなさん、待望のニュースですよ！CHARACTER_NAMEのYouTubeチャンネルに新動画がアップされました。今回のテーマはとっても興味深いですよ！",
   "🚀更新タイム🚀 CHARACTER_NAMEのYouTubeチャンネルで新しい動画の波が到来！この機会を見逃さないように！",
   "新作動画のお時間です！CHARACTER_NAMEがYouTubeに最新作を投稿されたようです！今すぐ視聴リストに追加追加！",
   "🌈驚きのニュース🌈 CHARACTER_NAMEのクリエイティビティが溢れる最新YouTube動画を見て、今日一日を特別なものにしましょう！",
@@ -48,8 +48,8 @@ def get_latest_videos():
     now = datetime.now(pytz.UTC)
     # 分を10分単位で切り捨てるために、現在の分に対して10で割ってから切り捨て、再び10を掛ける
     truncated_minutes = (now.minute // 10) * 10
-    # 切り捨てた分を設定し、さらに10分前を求める
-    start_time = now.replace(minute=truncated_minutes, second=0, microsecond=0) - timedelta(minutes=10)
+    # 切り捨てた分を設定し、さらに10分前を求める前に3分を加算
+    start_time = now.replace(minute=truncated_minutes + 3, second=0, microsecond=0) - timedelta(minutes=10)
     # start_time = now - timedelta(hours=10)
     messages = []
 
