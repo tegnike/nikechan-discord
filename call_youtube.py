@@ -12,7 +12,7 @@ load_dotenv()
 TOKEN = os.environ['DISCORD_KEY']
 CHANNEL_ID = 1133743935727091773
 API_KEY = os.environ['GOOGLE_API_KEY']
-CHANNEL_IDS = {'スイちゃん': 'UCl5shU0C8jjo81SB-V4jEtA', 'ここママ': 'UCkICVOSNH4AXjJnQ6dNeehA'}
+CHANNEL_IDS = {'スイちゃん': 'UCl5shU0C8jjo81SB-V4jEtA', 'ここママ': 'UCkICVOSNH4AXjJnQ6dNeehA', '私': 'UCj94TVhN0op8xZX9r-sTvSA'}
 
 intents = discord.Intents.default()
 intents.messages = True
