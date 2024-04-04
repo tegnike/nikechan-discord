@@ -61,6 +61,13 @@ TEXT_LIST = [
 
 
 def get_latest_videos():
+    # 日本時間で深夜 24 時〜6時の間はスキップ
+    now = datetime.now(pytz.timezone('Asia/Tokyo'))
+    print(now)
+    if now.hour >= 24 or now.hour <= 6:
+        print('Skip sending messages because it is between 24:00 and 6:00')
+        return []
+
     youtube = build('youtube', 'v3', developerKey=API_KEY)
     now = datetime.now(pytz.UTC)
     truncated_minutes = (now.minute // 10) * 10
