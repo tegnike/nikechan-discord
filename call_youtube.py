@@ -10,9 +10,24 @@ from pymongo import MongoClient
 load_dotenv()
 
 TOKEN = os.environ['DISCORD_KEY']
-CHANNEL_ID = 1133743935727091773
 API_KEY = os.environ['GOOGLE_API_KEY']
-CHANNEL_IDS = {'スイちゃん': 'UCl5shU0C8jjo81SB-V4jEtA', 'ここママ': 'UCkICVOSNH4AXjJnQ6dNeehA', '私': 'UCj94TVhN0op8xZX9r-sTvSA'}
+CHANNEL_IDS = [
+    {
+        "name": 'スイちゃん',
+        "channel_id": 'UCl5shU0C8jjo81SB-V4jEtA',
+        "discord_id": "1057842358298878042"
+    },
+    {
+        "name": 'ここママ',
+        "channel_id": 'UCkICVOSNH4AXjJnQ6dNeehA',
+        "discord_id": "1057842314761994320"
+    },
+    {
+        "name": '私',
+        "channel_id": 'UCj94TVhN0op8xZX9r-sTvSA',
+        "discord_id": "1133743935727091773"
+    }
+]
 
 intents = discord.Intents.default()
 intents.messages = True
@@ -62,7 +77,9 @@ def get_latest_videos():
     db = client.nikechan_bot
     collection = db.youtube_videos
 
-    for channel_name, channel_id in CHANNEL_IDS.items():
+    for channel in CHANNEL_IDS:
+        channel_name = channel["name"]
+        channel_id = channel["channel_id"]
         response = youtube.search().list(
             part='snippet',
             channelId=channel_id,
@@ -89,19 +106,26 @@ def get_latest_videos():
             video_url = f'https://www.youtube.com/watch?v={video_id}'
             message = random.choice(TEXT_LIST).replace('CHARACTER_NAME', channel_name)
             message = f'{message}\n『{title}』\n{video_url}'
-            messages.append(message)
+            result = {
+                "message": message,
+                "discord_id": channel["discord_id"]
+            }
+            messages.append(result)
 
     return messages
 
 
 async def send_messages():
-    channel = client.get_channel(CHANNEL_ID)
-    print(channel)
-    if channel:
-        messages = get_latest_videos()
-        for message in messages:
-            print(message)
-            await channel.send(message)
+    messages = get_latest_videos()
+    for message in messages:
+        # メッセージからDiscordのチャンネルIDを抽出
+        discord_id = message["discord_id"]
+        # 抽出したDiscordのチャンネルIDでチャンネルを取得
+        channel = client.get_channel(int(discord_id))
+        if channel:
+            message_to_send = message["message"]
+            print(message_to_send)
+            await channel.send(message_to_send)
     await client.close()
 
 
