@@ -60,6 +60,10 @@ async def response_message(self, message):
         auther_name = message.author.nick
     else:
         auther_name = message.author.name
+
+    # デバッグ用のログ出力を追加
+    print(f"Debug: author.id={message.author.id}, author.name={message.author.name}, author.nick={message.author.nick}")
+
     print('Message received from', auther_name, ':', message_content)
 
     # 日本時間の現在時刻を'%Y/%m/%d %H:%M'形式で取得
