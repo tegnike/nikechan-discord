@@ -43,19 +43,20 @@ async def send_openai_response(message, messages_for_history, model_name, thread
         retry_count = 0
         while retry_count < 5:
             try:
+                attachments = []
+                for file_id in file_ids:
+                    attachments.append({
+                        "file_id": file_id,
+                        "tools": [
+                            {"type": "code_interpreter"},
+                            {"type": "file_search"}
+                        ]
+                    })
                 client.beta.threads.messages.create(
                     thread_id=thread_id,
                     role="user",
                     content=content,
-                    attachments=[
-                        {
-                            "file_id": "",
-                            "tools": [
-                                {"type": "code_interpreter", "file_ids": file_ids},
-                                {"type": "file_search", "vector_stores": [{"file_ids": file_ids}]}
-                            ]
-                        }
-                    ]
+                    attachments=attachments
                 )
                 break
             except Exception as e:
