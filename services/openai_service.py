@@ -47,7 +47,16 @@ async def send_openai_response(message, messages_for_history, model_name, thread
                     thread_id=thread_id,
                     role="user",
                     content=content,
-                    file_ids=file_ids
+                    tools={
+                        "code_interpreter": {
+                            "file_ids": file_ids
+                        },
+                        "file_search": {
+                            "vector_stores": [{
+                                "file_ids": file_ids
+                            }]
+                        }
+                    }
                 )
                 break
             except Exception as e:
