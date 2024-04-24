@@ -66,7 +66,7 @@ async def send_openai_response(message, messages_for_history, model_name, thread
             assistant_id=ASSISTANT_ID,
             truncation_strategy={
                 "type": "last_messages",
-                "max_tokens": 20,
+                "last_messages": 20,
             }
         )
 
