@@ -49,6 +49,7 @@ async def send_openai_response(message, messages_for_history, model_name, thread
                     content=content,
                     attachments=[
                         {
+                            "file_id": file_ids[0],
                             "tools": [
                                 {"type": "code_interpreter", "file_ids": file_ids},
                                 {"type": "file_search", "vector_stores": [{"file_ids": file_ids}]}
