@@ -47,14 +47,16 @@ async def send_openai_response(message, messages_for_history, model_name, thread
                     thread_id=thread_id,
                     role="user",
                     content=content,
-                    tools={
-                        "code_interpreter": {
-                            "file_ids": file_ids
-                        },
-                        "file_search": {
-                            "vector_stores": [{
+                    attachments={
+                        "tools": {
+                            "code_interpreter": {
                                 "file_ids": file_ids
-                            }]
+                            },
+                            "file_search": {
+                                "vector_stores": [{
+                                    "file_ids": file_ids
+                                }]
+                            }
                         }
                     }
                 )
