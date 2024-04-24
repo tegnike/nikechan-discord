@@ -6,3 +6,4 @@ myenv/
 ._**
 /tmp_files/*
 !/tmp_files/.keep
+.venv/

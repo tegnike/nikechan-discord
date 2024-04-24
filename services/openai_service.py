@@ -11,13 +11,6 @@ async def send_openai_response(message, messages_for_history, model_name, thread
     ASSISTANT_ID = 'asst_Dyf8M2h6lPdojCmouzgDbc7t'
     END_ACTIONS = ["completed", "expired", "failed", "cancelled"]
 
-    thread_messages = client.beta.threads.messages.list(thread_id)
-    # thread_messages.dataが　19より大きい場合はスレッドを変更する
-    if len(thread_messages.data) > 19:
-        new_thread = client.beta.threads.create()
-        thread_id = new_thread.id
-        print("Thread changed.")
-
     images = {}
     image_name = ""
     file_ids = []
@@ -70,7 +63,11 @@ async def send_openai_response(message, messages_for_history, model_name, thread
     try:
         create_run = client.beta.threads.runs.create(
             thread_id=thread_id,
-            assistant_id=ASSISTANT_ID
+            assistant_id=ASSISTANT_ID,
+            truncation_strategy={
+                "type": "last_messages",
+                "max_tokens": 20,
+            }
         )
 
         while True:
