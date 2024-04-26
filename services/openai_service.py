@@ -11,7 +11,7 @@ client = OpenAI()
 
 async def send_openai_response(message, messages_for_history, model_name, thread_id):
     ASSISTANT_ID = 'asst_Dyf8M2h6lPdojCmouzgDbc7t'
-    END_ACTIONS = ["completed", "expired", "failed", "cancelled"]
+    END_ACTIONS = ["incomplete", "completed", "expired", "failed", "cancelled"]
 
     images = {}
     image_names = []
