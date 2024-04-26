@@ -1,4 +1,5 @@
-import io
+import aiofiles
+import os
 import re
 import time
 from openai import OpenAI
@@ -24,16 +25,26 @@ async def send_openai_response(message, messages_for_history, model_name, thread
                 image_name = attachment.filename
                 print("Temporary image saved:", attachment.filename)
             elif re.search(r'\.(c|cpp|csv|docx|html|java|json|md|pdf|php|pptx|py|py|rb|tex|txt)$', attachment.filename):
-                # ファイルの内容をメモリ上で扱う
+                # ファイルの内容を一時ファイルに保存
+                temp_file_path = f"/tmp/{attachment.filename}"
                 file_bytes = await attachment.read()  # Discordからファイルのバイトを読み込む
-                file_stream = io.BytesIO(file_bytes)  # バイトをBytesIOオブジェクトに変換
 
-                file = client.files.create(
-                    file=file_stream,  # BytesIOオブジェクトを直接渡す
-                    purpose='assistants'
-                )
-                file_ids.append(file.id)
-                print("file uploaded:", file.id)
+                # 非同期でファイルを一時的に保存
+                async with aiofiles.open(temp_file_path, 'wb') as temp_file:
+                    await temp_file.write(file_bytes)
+
+                # 一時ファイルをOpenAI APIに渡す
+                try:
+                    with open(temp_file_path, 'rb') as file_stream:
+                        file = client.files.create(
+                            file=file_stream,
+                            purpose='assistants'
+                        )
+                        file_ids.append(file.id)
+                        print("file uploaded:", file.id)
+                finally:
+                    # 使用後は一時ファイルを削除
+                    os.remove(temp_file_path)
 
     for index, message_for_history in enumerate(messages_for_history):
         # index がmessages_for_historyの長さ-1のときは、最後のメッセージなので、画像を添付する
