@@ -1,3 +1,4 @@
+import io
 import re
 import time
 from openai import OpenAI
@@ -23,11 +24,15 @@ async def send_openai_response(message, messages_for_history, model_name, thread
                 image_name = attachment.filename
                 print("Temporary image saved:", attachment.filename)
             elif re.search(r'\.(c|cpp|csv|docx|html|java|json|md|pdf|php|pptx|py|py|rb|tex|txt)$', attachment.filename):
+                # ファイルの内容をメモリ上で扱う
+                file_bytes = await attachment.read()  # Discordからファイルのバイトを読み込む
+                file_stream = io.BytesIO(file_bytes)  # バイトをBytesIOオブジェクトに変換
+
                 file = client.files.create(
-                    file=open(attachment.filename, "rb"),
+                    file=file_stream,  # BytesIOオブジェクトを直接渡す
                     purpose='assistants'
                 )
-                file_ids.push(file.id)
+                file_ids.append(file.id)
                 print("file uploaded:", file.id)
 
     for index, message_for_history in enumerate(messages_for_history):
