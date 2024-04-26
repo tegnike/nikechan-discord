@@ -14,15 +14,14 @@ async def send_openai_response(message, messages_for_history, model_name, thread
     END_ACTIONS = ["completed", "expired", "failed", "cancelled"]
 
     images = {}
-    image_name = ""
+    image_names = []
+    file_names = []
     file_ids = []
     if message.attachments:
         for attachment in message.attachments:
             if re.search(r'\.(png|jpeg|jpg|gif|webp)$', attachment.filename):
-                if image_name != "":
-                    continue
                 images[attachment.filename] = await get_attachment_data(attachment)
-                image_name = attachment.filename
+                image_names.append(attachment.filename)
                 print("Temporary image saved:", attachment.filename)
             elif re.search(r'\.(c|cpp|csv|docx|html|java|json|md|pdf|php|pptx|py|py|rb|tex|txt)$', attachment.filename):
                 # ファイルの内容を一時ファイルに保存
@@ -42,6 +41,7 @@ async def send_openai_response(message, messages_for_history, model_name, thread
                         )
                         file_ids.append(file.id)
                         print("file uploaded:", file.id)
+                        file_names.append(attachment.filename)
                 finally:
                     # 使用後は一時ファイルを削除
                     os.remove(temp_file_path)
@@ -49,10 +49,11 @@ async def send_openai_response(message, messages_for_history, model_name, thread
     for index, message_for_history in enumerate(messages_for_history):
         # index がmessages_for_historyの長さ-1のときは、最後のメッセージなので、画像を添付する
         if index == len(messages_for_history) - 1:
-            if images == {}:
-                content = message_for_history
-            else:
-                content = f"{message_for_history}\n次の画像が添付されています。{image_name}\nIf user wants to generate an image from an image, please use describe_image function first, then create_image function."
+            content = message_for_history
+            if image_names:
+                content += f"\n次の画像が添付されています：{', '.join(image_names)}。\nこれらの画像から新しい画像を生成したい場合は、最初に describe_image 関数を使用し、その後で create_image 関数を使用してください。"
+            if file_names:
+                content += f"\n次のファイルが添付されています：{', '.join(file_names)}。\nユーザがこれらのファイルを使用して何かを行うことを期待している場合は、file_searchを使用してファイルの中身を確認してください。"
         else:
             content = message_for_history
 
