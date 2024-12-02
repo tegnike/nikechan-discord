@@ -10,6 +10,7 @@ master_id = 576031815945420812
 allowed_voice_channels = [1090678631489077333, 1114285942375718986, 1135457812982530068]
 client = OpenAI()
 
+
 async def response_message(self, message):
     # サーバーID取得
     server_id = message.guild.id
@@ -23,7 +24,7 @@ async def response_message(self, message):
             "messages_for_history": [],
             "messages_for_judge": [],
             "count": 0,
-            "current_date": datetime.now(timezone('Europe/Warsaw')).date(),
+            "current_date": datetime.now(timezone("Europe/Warsaw")).date(),
             "is_daily_limit": False,
             "is_monthly_limit": False,
             "thread_id": thread.id,
@@ -33,52 +34,60 @@ async def response_message(self, message):
     from_mongo(state)
 
     # 日付が変わったらカウントをリセット
-    new_date = datetime.now(timezone('Europe/Warsaw')).date()
+    new_date = datetime.now(timezone("Europe/Warsaw")).date()
     if new_date > state["current_date"]:
         state["count"] = 0
-        state["current_date"] = new_date 
+        state["current_date"] = new_date
 
     # 100件以上のメッセージは無視
     if state["count"] >= 100:
         if state["count"] == 100:
             await message.channel.send("[固定応答]設定上限に達したため、本日の応答は終了します。")
             state["count"] = 101
-        print('Message limit.')
+        print("Message limit.")
         return
     if await check_moderation(message):
-        print('Moderation True.')
+        print("Moderation True.")
         return
 
     # メッセージ整形
-    message_content = re.sub(r'<@!?\d+>', '', message.content)
+    message_content = re.sub(r"<@!?\d+>", "", message.content)
 
     # auther_nameを取得
-    auther_name = ''
+    auther_name = ""
     if master_id == message.author.id:
-        auther_name = 'マスター'
-    elif hasattr(message.author, 'nick') and message.author.nick:
+        auther_name = "マスター"
+    elif hasattr(message.author, "nick") and message.author.nick:
         auther_name = message.author.nick
     else:
         auther_name = message.author.name
 
     # デバッグ用のログ出力を追加
-    print(f"Debug: author.id={message.author.id}, author.name={message.author.name}, author.nick={message.author.nick}")
+    print(
+        f"Debug: author.id={message.author.id}, author.name={message.author.name}, author.nick={message.author.nick}"
+    )
 
-    print('Message received from', auther_name, ':', message_content)
+    print("Message received from", auther_name, ":", message_content)
 
     # 日本時間の現在時刻を'%Y/%m/%d %H:%M'形式で取得
-    now = datetime.now(timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M')
+    now = datetime.now(timezone("Asia/Tokyo")).strftime("%Y/%m/%d %H:%M")
     message_content = f"{auther_name}({now}): {message_content}"
 
     need_response = False
     if message.reference is not None:
         # bot宛のリプライであるかを確認
-        referenced_message = await message.channel.fetch_message(message.reference.message_id)
+        referenced_message = await message.channel.fetch_message(
+            message.reference.message_id
+        )
         need_response = referenced_message.author == self.user
         # リプライに反応させるようにリプライメッセージを履歴に追加
         print("Referenced message:", referenced_message.content)
-        referenced_message_content = f"{auther_name}({now}): {referenced_message.content}"
-        message_content = f"AIであるあなたの発言: {referenced_message_content}\n{message_content}"
+        referenced_message_content = (
+            f"{auther_name}({now}): {referenced_message.content}"
+        )
+        message_content = (
+            f"AIであるあなたの発言: {referenced_message_content}\n{message_content}"
+        )
     elif self.user in message.mentions:
         # bot宛のメンションであるかを確認
         need_response = True
@@ -96,7 +105,9 @@ async def response_message(self, message):
         # OpenAIによる応答生成
         model_name = "gpt-3.5-turbo"
         model_name = "gpt-4o" if state["count"] <= 20 else "gpt-3.5-turbo"
-        response, thread_id = await send_openai_response(message, state["messages_for_history"], model_name, state["thread_id"])
+        response, thread_id = await send_openai_response(
+            message, state["messages_for_history"], model_name, state["thread_id"]
+        )
 
         state["messages_for_judge"].append({"role": "assistant", "content": response})
         state["thread_id"] = thread_id
@@ -106,23 +117,22 @@ async def response_message(self, message):
         #     await message.channel.send("[固定応答]設定上限に達したため、モデルをGPT-4からGPT-3.5に切り替えます。")
 
         state["count"] += 1
-        print('Message send completed.')
+        print("Message send completed.")
 
         # 会話歴は常に5件に保つ
         state["messages_for_judge"] = state["messages_for_judge"][-5:]
         state["messages_for_history"].clear()
 
-        self.collection_chats.insert_one({
-            "server_id": server_id,
-            "user": message_content,
-            "assistant": response
-        })
+        self.collection_chats.insert_one(
+            {"server_id": server_id, "user": message_content, "assistant": response}
+        )
     else:
-        print('Message was not sent.')
+        print("Message was not sent.")
 
     # 状態を更新
     to_mongo(state)
     self.collection_states.update_one({"server_id": server_id}, {"$set": state})
+
 
 async def response_join_message(self, message):
     if message.mentions:
@@ -131,21 +141,25 @@ async def response_join_message(self, message):
         if member:
             # user_nameを取得
             user_name = member.nick if member.nick else member.name
-            print('User joined', ':', user_name)
+            print("User joined", ":", user_name)
 
             # メッセージを送信
-            await message.channel.send(select_random_message('join_messages').replace("XXXXX", user_name))
+            await message.channel.send(
+                select_random_message("join_messages").replace("XXXXX", user_name)
+            )
 
-            print('Join message completed.')
+            print("Join message completed.")
         else:
-            print('Member not found.')
+            print("Member not found.")
     else:
-        print('Nobody joined.')
+        print("Nobody joined.")
+
 
 # MongoDBに保存する用にデータを変換
 def to_mongo(state):
-    state["current_date"] = state["current_date"].strftime('%Y-%m-%d')
+    state["current_date"] = state["current_date"].strftime("%Y-%m-%d")
+
 
 # MongoDBのデータをpythonで使用できるように変換
 def from_mongo(state):
-    state["current_date"] = datetime.strptime(state["current_date"], '%Y-%m-%d').date()
+    state["current_date"] = datetime.strptime(state["current_date"], "%Y-%m-%d").date()
