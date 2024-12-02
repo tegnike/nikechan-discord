@@ -5,6 +5,7 @@ from openai import OpenAI
 from services.openai_service import send_openai_response, judge_if_i_response
 from services.moderation_service import check_moderation
 from services.select_random_message_service import select_random_message
+from services.mongo_adapter import MongoAdapter
 
 master_id = 576031815945420812
 allowed_voice_channels = [1090678631489077333, 1114285942375718986, 1135457812982530068]
@@ -12,26 +13,14 @@ client = OpenAI()
 
 
 async def response_message(self, message):
+    # MongoAdapterのインスタンス化
+    mongo_adapter = MongoAdapter(self.collection_states, self.collection_chats)
+
     # サーバーID取得
     server_id = message.guild.id
 
     # サーバーIDから状態を取得、なければ初期化
-    state = self.collection_states.find_one({"server_id": server_id})
-    if state == None:
-        thread = client.beta.threads.create()
-        state = {
-            "server_id": server_id,
-            "messages_for_history": [],
-            "messages_for_judge": [],
-            "count": 0,
-            "current_date": datetime.now(timezone("Europe/Warsaw")).date(),
-            "is_daily_limit": False,
-            "is_monthly_limit": False,
-            "thread_id": thread.id,
-        }
-        to_mongo(state)
-        self.collection_states.insert_one(state)
-    from_mongo(state)
+    state = mongo_adapter.get_or_create_state(server_id)
 
     # 日付が変わったらカウントをリセット
     new_date = datetime.now(timezone("Europe/Warsaw")).date()
@@ -42,7 +31,9 @@ async def response_message(self, message):
     # 100件以上のメッセージは無視
     if state["count"] >= 100:
         if state["count"] == 100:
-            await message.channel.send("[固定応答]設定上限に達したため、本日の応答は終了します。")
+            await message.channel.send(
+                "[固定応答]設定上限に達したため、本日の応答は終了します。"
+            )
             state["count"] = 101
         print("Message limit.")
         return
@@ -123,21 +114,20 @@ async def response_message(self, message):
         state["messages_for_judge"] = state["messages_for_judge"][-5:]
         state["messages_for_history"].clear()
 
-        self.collection_chats.insert_one(
-            {"server_id": server_id, "user": message_content, "assistant": response}
-        )
+        mongo_adapter.save_chat(server_id, message_content, response)
     else:
         print("Message was not sent.")
 
     # 状態を更新
-    to_mongo(state)
-    self.collection_states.update_one({"server_id": server_id}, {"$set": state})
+    mongo_adapter.update_state(server_id, state)
 
 
 async def response_join_message(self, message):
     if message.mentions:
         user_id = message.mentions[0].id  # メンションされたユーザーのIDを取得
-        member = message.guild.get_member(user_id)  # IDからサーバー内のMemberオブジェクトを取得
+        member = message.guild.get_member(
+            user_id
+        )  # IDからサーバー内のMemberオブジェクトを取得
         if member:
             # user_nameを取得
             user_name = member.nick if member.nick else member.name
@@ -153,13 +143,3 @@ async def response_join_message(self, message):
             print("Member not found.")
     else:
         print("Nobody joined.")
-
-
-# MongoDBに保存する用にデータを変換
-def to_mongo(state):
-    state["current_date"] = state["current_date"].strftime("%Y-%m-%d")
-
-
-# MongoDBのデータをpythonで使用できるように変換
-def from_mongo(state):
-    state["current_date"] = datetime.strptime(state["current_date"], "%Y-%m-%d").date()

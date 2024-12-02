@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from discord.ext import commands
 from services.response_service import response_message, response_join_message
 from services.error_service import send_error_message
+from services.mongo_adapter import MongoAdapter
 import json
 
 load_dotenv()
@@ -44,11 +45,15 @@ class MyBot(commands.Bot):
         self.collection_states = db.states
         self.collection_chats = db.chats
 
+        # インデックスの作成
+        self.collection_states.create_index([("server_id", 1)], unique=True)
+        self.collection_chats.create_index([("server_id", 1)])
+
     async def on_ready(self):
         print("Bot is ready.")
         print("Logged in as", self.user)
         status_message = (
-            "こんにちは！AITuberのニケです！\n何か質問があれば、お気軽にお声掛けください！\n\n音声：VOICEVOX 小夜/SAYO"
+            "こんにちは！AIニケです！\n何か質問があれば、お気軽にお声掛けください！"
         )
         await self.change_presence(activity=discord.Game(name=status_message))
 
