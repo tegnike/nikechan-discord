@@ -7,3 +7,4 @@ myenv/
 /tmp_files/*
 !/tmp_files/.keep
 .venv/
+.mypy_cache/
