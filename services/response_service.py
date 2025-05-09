@@ -2,17 +2,18 @@ import re
 from datetime import datetime
 from pytz import timezone
 from openai import OpenAI
-from services.openai_service import send_openai_response, judge_if_i_response
+from services.agents_service import send_agent_response, judge_if_i_response
 from services.moderation_service import check_moderation
 from services.select_random_message_service import select_random_message
 from services.supabase_adapter import SupabaseAdapter
+from services.attachment_service import get_attachment_data
 
 master_id = 576031815945420812
 allowed_voice_channels = [1090678631489077333, 1114285942375718986, 1135457812982530068]
 client = OpenAI()
 
 
-async def response_message(self, message):
+async def response_message(self, message, system_message_type="base"):
     # SupabaseAdapterのインスタンス化
     supabase_adapter = SupabaseAdapter()
 
@@ -20,7 +21,7 @@ async def response_message(self, message):
     server_id = message.guild.id
 
     # サーバーIDから状態を取得、なければ初期化
-    state = supobase_adapter.get_or_create_state(server_id)
+    state = supabase_adapter.get_or_create_state(server_id)
 
     # 日付が変わったらカウントをリセット
     new_date = datetime.now(timezone("Europe/Warsaw")).date()
@@ -91,16 +92,23 @@ async def response_message(self, message):
 
     print("AI should response?:", need_response)
 
+    images = {}
+    if message.attachments:
+        for attachment in message.attachments:
+            if re.search(r"\.(png|jpeg|jpg|gif|webp)$", attachment.filename):
+                images[attachment.filename] = await get_attachment_data(attachment)
+                print("Temporary image saved:", attachment.filename)
+
     # 応答が必要な場合
     if need_response:
         # OpenAIによる応答生成
         model_name = "gpt-4" if state["message_count"] <= 20 else "gpt-3.5-turbo"
-        response, thread_id = await send_openai_response(
-            message, state["messages_for_history"], model_name, state["thread_id"]
+        
+        response, agent = await send_agent_response(
+            message, state["messages_for_history"], model_name, images
         )
 
         state["messages_for_judge"].append({"role": "assistant", "content": response})
-        state["thread_id"] = thread_id
         state["message_count"] += 1
 
         # 会話歴は常に5件に保つ

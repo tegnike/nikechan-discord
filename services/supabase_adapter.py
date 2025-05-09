@@ -21,9 +21,6 @@ class SupabaseAdapter:
         )
 
         if not result.data:
-            # 新規スレッドの作成
-            thread = self.openai_client.beta.threads.create()
-
             # 新規サーバー状態の作成
             new_state = {
                 "server_id": server_id,
@@ -31,7 +28,7 @@ class SupabaseAdapter:
                 "current_date": datetime.now().date().isoformat(),
                 "is_daily_limit": False,
                 "is_monthly_limit": False,
-                "thread_id": thread.id,
+                "thread_id": None,  # Agents SDKでは不要
             }
             self.supabase.table("discord_server_states").insert(new_state).execute()
             state = new_state
