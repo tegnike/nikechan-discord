@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from discord.ext import commands
 from services.response_service import response_message, response_join_message
 from services.error_service import send_error_message
-from services.mongo_adapter import MongoAdapter
+from services.supabase_adapter import SupabaseAdapter
 import json
 
 load_dotenv()
@@ -27,27 +27,9 @@ command_prefix = "/"
 class MyBot(commands.Bot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        # MongoDBに接続
-        client = None
-        if os.environ["ENVIRONMENT"] == "development":
-            client = MongoClient(
-                "localhost", 27018, username="root", password="password"
-            )
-        else:
-            client = MongoClient(
-                "mongodb+srv://user:uxwl6GjFSXPkNvZJ@cluster0.njarmyw.mongodb.net/?retryWrites=true&w=majority"
-            )
-
-        # nikechan_botという名前のデータベースを取得（なかったら勝手に作成）
-        db = client.nikechan_bot
-        # データベースのstatesコレクションを取得（なかったら勝手に作成、コレクション=RDBMSのテーブル）
-        self.collection_states = db.states
-        self.collection_chats = db.chats
-
-        # インデックスの作成
-        self.collection_states.create_index([("server_id", 1)], unique=True)
-        self.collection_chats.create_index([("server_id", 1)])
+        # Supabaseの環境変数が設定されていることを確認
+        if not all([os.environ.get("SUPABASE_URL"), os.environ.get("SUPABASE_KEY")]):
+            raise ValueError("Supabase credentials are not properly configured")
 
     async def on_ready(self):
         print("Bot is ready.")

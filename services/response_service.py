@@ -5,7 +5,7 @@ from openai import OpenAI
 from services.openai_service import send_openai_response, judge_if_i_response
 from services.moderation_service import check_moderation
 from services.select_random_message_service import select_random_message
-from services.mongo_adapter import MongoAdapter
+from services.supabase_adapter import SupabaseAdapter
 
 master_id = 576031815945420812
 allowed_voice_channels = [1090678631489077333, 1114285942375718986, 1135457812982530068]
@@ -13,28 +13,28 @@ client = OpenAI()
 
 
 async def response_message(self, message):
-    # MongoAdapterのインスタンス化
-    mongo_adapter = MongoAdapter(self.collection_states, self.collection_chats)
+    # SupabaseAdapterのインスタンス化
+    supabase_adapter = SupabaseAdapter()
 
     # サーバーID取得
     server_id = message.guild.id
 
     # サーバーIDから状態を取得、なければ初期化
-    state = mongo_adapter.get_or_create_state(server_id)
+    state = supobase_adapter.get_or_create_state(server_id)
 
     # 日付が変わったらカウントをリセット
     new_date = datetime.now(timezone("Europe/Warsaw")).date()
     if new_date > state["current_date"]:
-        state["count"] = 0
+        state["message_count"] = 0
         state["current_date"] = new_date
 
     # 100件以上のメッセージは無視
-    if state["count"] >= 100:
-        if state["count"] == 100:
+    if state["message_count"] >= 100:
+        if state["message_count"] == 100:
             await message.channel.send(
                 "[固定応答]設定上限に達したため、本日の応答は終了します。"
             )
-            state["count"] = 101
+            state["message_count"] = 101
         print("Message limit.")
         return
     if await check_moderation(message):
@@ -94,32 +94,27 @@ async def response_message(self, message):
     # 応答が必要な場合
     if need_response:
         # OpenAIによる応答生成
-        model_name = "gpt-3.5-turbo"
-        model_name = "gpt-4o" if state["count"] <= 20 else "gpt-3.5-turbo"
+        model_name = "gpt-4" if state["message_count"] <= 20 else "gpt-3.5-turbo"
         response, thread_id = await send_openai_response(
             message, state["messages_for_history"], model_name, state["thread_id"]
         )
 
         state["messages_for_judge"].append({"role": "assistant", "content": response})
         state["thread_id"] = thread_id
-
-        # if state["count"] == 20:
-        #     # 20件目のメッセージを送信したら、モデルをGPT-3.5に切り替える
-        #     await message.channel.send("[固定応答]設定上限に達したため、モデルをGPT-4からGPT-3.5に切り替えます。")
-
-        state["count"] += 1
-        print("Message send completed.")
+        state["message_count"] += 1
 
         # 会話歴は常に5件に保つ
         state["messages_for_judge"] = state["messages_for_judge"][-5:]
         state["messages_for_history"].clear()
 
-        mongo_adapter.save_chat(server_id, message_content, response)
+        # チャット履歴の保存
+        supabase_adapter.save_chat(server_id, message_content, response)
     else:
-        print("Message was not sent.")
+        # チャット履歴の保存（応答なし）
+        supabase_adapter.save_chat(server_id, message_content, None)
 
     # 状態を更新
-    mongo_adapter.update_state(server_id, state)
+    supabase_adapter.update_state(server_id, state)
 
 
 async def response_join_message(self, message):
