@@ -1,0 +1,5 @@
+WEBHOOK_URL="https://discord.com/api/webhooks/..."
+X_BEARER_TOKEN="xxxxx"
+JOB_TOKEN="devtoken"
+SUPABASE_URL="https://xxxxx.supabase.co"
+SUPABASE_SERVICE_ROLE_KEY="service_role_xxxxx"

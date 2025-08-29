@@ -1,0 +1,11 @@
+name = "discord-cron-worker"
+main = "src/index.ts"
+compatibility_date = "2025-08-29"
+
+[triggers]
+# 20分おき（UTC）
+crons = ["*/20 * * * *"]
+
+[observability]
+enabled = true
+
